@@ -7,6 +7,8 @@ mod config;
 mod domain;
 mod infrastructure;
 
+use infrastructure::security;
+
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     dotenvy::dotenv().ok();
@@ -34,6 +36,7 @@ async fn main() -> std::io::Result<()> {
     let pool_data = web::Data::new(pool);
     let otp_store = web::Data::new(api::auth::OtpStore::default());
     let rate_limit_store = web::Data::new(api::auth::RateLimitStore::default());
+    let ip_rate_limit_store = web::Data::new(security::IpRateLimitStore::default());
 
     HttpServer::new(move || {
         let cors = Cors::default()
@@ -43,12 +46,16 @@ async fn main() -> std::io::Result<()> {
             .max_age(3600);
 
         App::new()
+            .wrap(security::SecurityHeaders)
+            .wrap(security::RequestId)
             .wrap(cors)
             .wrap(TracingLogger::default())
+            .app_data(security::json_body_config(security::DEFAULT_BODY_LIMIT))
             .app_data(config_data.clone())
             .app_data(pool_data.clone())
             .app_data(otp_store.clone())
             .app_data(rate_limit_store.clone())
+            .app_data(ip_rate_limit_store.clone())
             .service(api::health::health_check)
             .service(
                 web::scope("/api/v1")

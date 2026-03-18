@@ -1,0 +1,1493 @@
+openapi: "3.0.3"
+info:
+  title: Aarokya API
+  description: |
+    REST API for the Aarokya affordable healthcare platform.
+    Serves India's 200M+ gig workers with Health Savings Accounts (HSA),
+    insurance subscriptions, claims management, and partner integrations.
+
+    **Authentication:** All protected endpoints require a Bearer JWT in the
+    `Authorization` header. Obtain tokens via the OTP-based auth flow.
+
+    **Money:** All monetary values are in **paise** (1 INR = 100 paise) and
+    represented as 64-bit integers.
+  version: "0.1.0"
+  contact:
+    name: Aarokya Team
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+  - url: https://api.aarokya.in
+    description: Production
+
+tags:
+  - name: Health
+    description: Server health checks
+  - name: Auth
+    description: Phone OTP authentication and token management
+  - name: HSA
+    description: Health Savings Account management
+  - name: Contributions
+    description: HSA contribution operations
+  - name: Insurance
+    description: Insurance plan browsing, subscription, and policy management
+  - name: Claims
+    description: Insurance claim submission and review
+  - name: Partners
+    description: Employer/platform partner operations
+
+# ── Security Schemes ───────────────────────────────────────────────────────
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT access token obtained from `/api/v1/auth/verify-otp`.
+        Include as `Authorization: Bearer <token>`.
+
+  # ── Shared Headers ───────────────────────────────────────────────────────
+
+  headers:
+    X-Request-Id:
+      description: Unique request identifier for tracing
+      schema:
+        type: string
+        format: uuid
+        example: "550e8400-e29b-41d4-a716-446655440000"
+    X-RateLimit-Limit:
+      description: Maximum requests allowed in the current window
+      schema:
+        type: integer
+        example: 100
+    X-RateLimit-Remaining:
+      description: Requests remaining in the current window
+      schema:
+        type: integer
+        example: 95
+    X-RateLimit-Reset:
+      description: Seconds until the rate limit window resets
+      schema:
+        type: integer
+        example: 45
+
+  # ── Reusable Schemas ─────────────────────────────────────────────────────
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+          example: "bad_request"
+        message:
+          type: string
+          example: "Invalid phone number"
+
+    HealthResponse:
+      type: object
+      required: [status, version]
+      properties:
+        status:
+          type: string
+          example: "healthy"
+        version:
+          type: string
+          example: "0.1.0"
+
+    # ── Auth ─────────────────────────────────────────────────────────────
+
+    SendOtpRequest:
+      type: object
+      required: [phone]
+      properties:
+        phone:
+          type: string
+          description: Phone number (min 10 chars)
+          example: "+919876543210"
+
+    SendOtpResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+          example: "OTP sent successfully"
+        otp_hint:
+          type: string
+          nullable: true
+          description: OTP value (dev only, removed in production)
+          example: "123456"
+
+    VerifyOtpRequest:
+      type: object
+      required: [phone, otp]
+      properties:
+        phone:
+          type: string
+          example: "+919876543210"
+        otp:
+          type: string
+          example: "123456"
+        user_type:
+          type: string
+          description: "User type for new users. Defaults to 'customer'."
+          enum: [customer, partner]
+          example: "customer"
+
+    AuthResponse:
+      type: object
+      required: [access_token, refresh_token, user_id, user_type, is_new_user]
+      properties:
+        access_token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        refresh_token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        user_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        user_type:
+          type: string
+          example: "customer"
+        is_new_user:
+          type: boolean
+          example: true
+
+    RefreshRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    RefreshResponse:
+      type: object
+      required: [access_token]
+      properties:
+        access_token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    # ── HSA ──────────────────────────────────────────────────────────────
+
+    CreateHsaRequest:
+      type: object
+      required: [abha_id]
+      properties:
+        abha_id:
+          type: string
+          description: Ayushman Bharat Health Account ID
+          example: "ABHA-12345678"
+
+    HealthSavingsAccount:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        abha_id:
+          type: string
+          example: "ABHA-12345678"
+        balance_paise:
+          type: integer
+          format: int64
+          description: Current balance in paise
+          example: 500000
+        total_contributed_paise:
+          type: integer
+          format: int64
+          example: 750000
+        insurance_eligible:
+          type: boolean
+          example: true
+        status:
+          type: string
+          example: "active"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    HsaDashboard:
+      type: object
+      properties:
+        balance_paise:
+          type: integer
+          format: int64
+          example: 500000
+        total_contributed_paise:
+          type: integer
+          format: int64
+          example: 750000
+        insurance_eligible:
+          type: boolean
+          example: true
+        basic_insurance_progress:
+          type: number
+          format: double
+          description: Progress toward basic insurance eligibility (0.0 to 1.0)
+          example: 1.0
+        premium_insurance_progress:
+          type: number
+          format: double
+          description: Progress toward premium insurance eligibility (0.0 to 1.0)
+          example: 0.75
+        contribution_count:
+          type: integer
+          format: int64
+          example: 15
+        contribution_velocity_paise_per_month:
+          type: number
+          format: double
+          example: 100000.0
+        insurance_tier:
+          type: string
+          enum: [none, basic, premium]
+          example: "basic"
+
+    # ── Contributions ────────────────────────────────────────────────────
+
+    CreateContributionRequest:
+      type: object
+      required: [source_type, amount_paise, idempotency_key]
+      properties:
+        source_type:
+          type: string
+          enum: [self, employer, platform, family, tip, csr, community, government]
+          example: "self"
+        source_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: UUID of the contributing entity (e.g. partner ID)
+        amount_paise:
+          type: integer
+          format: int64
+          minimum: 1
+          maximum: 100000000
+          description: Contribution amount in paise
+          example: 50000
+        idempotency_key:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Unique key to prevent duplicate contributions
+          example: "contrib-2024-01-15-001"
+        metadata:
+          type: object
+          nullable: true
+          description: Optional JSON metadata
+
+    Contribution:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        hsa_id:
+          type: string
+          format: uuid
+        source_type:
+          type: string
+          example: "self"
+        source_id:
+          type: string
+          format: uuid
+          nullable: true
+        amount_paise:
+          type: integer
+          format: int64
+          example: 50000
+        currency:
+          type: string
+          example: "INR"
+        idempotency_key:
+          type: string
+        status:
+          type: string
+          example: "completed"
+        metadata:
+          type: object
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PaginatedContributions:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Contribution"
+        page:
+          type: integer
+          format: int64
+          example: 1
+        per_page:
+          type: integer
+          format: int64
+          example: 20
+        total:
+          type: integer
+          format: int64
+          example: 45
+
+    ContributionSummaryResponse:
+      type: object
+      properties:
+        by_source:
+          type: array
+          items:
+            type: object
+            properties:
+              source_type:
+                type: string
+              total_paise:
+                type: integer
+                format: int64
+              count:
+                type: integer
+                format: int64
+        by_month:
+          type: array
+          items:
+            type: object
+            properties:
+              month:
+                type: string
+                example: "2024-01"
+              total_paise:
+                type: integer
+                format: int64
+              count:
+                type: integer
+                format: int64
+        grand_total_paise:
+          type: integer
+          format: int64
+          example: 1500000
+        grand_total_count:
+          type: integer
+          format: int64
+          example: 30
+
+    # ── Insurance ────────────────────────────────────────────────────────
+
+    InsurancePlan:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "basic-health"
+        name:
+          type: string
+          example: "Basic Health Cover"
+        description:
+          type: string
+        premium_paise:
+          type: integer
+          format: int64
+          example: 99900
+        coverage_paise:
+          type: integer
+          format: int64
+          example: 10000000
+        min_balance_paise:
+          type: integer
+          format: int64
+          example: 399900
+
+    SubscribeRequest:
+      type: object
+      required: [plan_id]
+      properties:
+        plan_id:
+          type: string
+          example: "basic-health"
+
+    InsurancePolicy:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        hsa_id:
+          type: string
+          format: uuid
+        plan_id:
+          type: string
+        plan_name:
+          type: string
+        premium_paise:
+          type: integer
+          format: int64
+        coverage_paise:
+          type: integer
+          format: int64
+        status:
+          type: string
+          example: "active"
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    # ── Claims ───────────────────────────────────────────────────────────
+
+    SubmitClaimRequest:
+      type: object
+      required: [policy_id, claim_type, amount_paise]
+      properties:
+        policy_id:
+          type: string
+          format: uuid
+        claim_type:
+          type: string
+          example: "hospitalization"
+        amount_paise:
+          type: integer
+          format: int64
+          example: 500000
+        hospital_name:
+          type: string
+          example: "Apollo Hospital"
+        diagnosis:
+          type: string
+          example: "Appendicitis"
+        document_urls:
+          type: array
+          items:
+            type: string
+            format: uri
+          example: ["https://example.com/doc1.pdf"]
+        description:
+          type: string
+          example: "Emergency surgery"
+
+    ReviewClaimRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [approved, rejected, under_review]
+          example: "approved"
+        review_notes:
+          type: string
+          example: "Documentation verified, claim approved."
+
+    Claim:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        policy_id:
+          type: string
+          format: uuid
+        hsa_id:
+          type: string
+          format: uuid
+        claim_type:
+          type: string
+        amount_paise:
+          type: integer
+          format: int64
+        hospital_name:
+          type: string
+          nullable: true
+        diagnosis:
+          type: string
+          nullable: true
+        document_urls:
+          type: object
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+          example: "submitted"
+        reviewed_by:
+          type: string
+          format: uuid
+          nullable: true
+        review_notes:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    # ── Partners ─────────────────────────────────────────────────────────
+
+    RegisterPartnerRequest:
+      type: object
+      required: [company_name, partner_type]
+      properties:
+        company_name:
+          type: string
+          minLength: 1
+          example: "Acme Logistics Pvt Ltd"
+        partner_type:
+          type: string
+          enum: [employer, platform, ngo, government]
+          example: "employer"
+        gstin:
+          type: string
+          nullable: true
+          example: "22AAAAA0000A1Z5"
+        contact_email:
+          type: string
+          format: email
+          nullable: true
+          example: "hr@acme.com"
+        contact_phone:
+          type: string
+          nullable: true
+          example: "+919876543210"
+
+    Partner:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        company_name:
+          type: string
+        partner_type:
+          type: string
+        gstin:
+          type: string
+          nullable: true
+        contact_email:
+          type: string
+          nullable: true
+        contact_phone:
+          type: string
+          nullable: true
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PartnerProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        company_name:
+          type: string
+        partner_type:
+          type: string
+        gstin:
+          type: string
+          nullable: true
+        contact_email:
+          type: string
+          nullable: true
+        contact_phone:
+          type: string
+          nullable: true
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        total_workers:
+          type: integer
+          format: int64
+          example: 150
+        total_contributed_paise:
+          type: integer
+          format: int64
+          example: 5000000
+        contribution_count:
+          type: integer
+          format: int64
+          example: 300
+
+    AddWorkerRequest:
+      type: object
+      properties:
+        worker_phone:
+          type: string
+          nullable: true
+          description: Phone number of the worker (at least one of phone or abha_id required)
+          example: "+919876543210"
+        abha_id:
+          type: string
+          nullable: true
+          description: ABHA ID of the worker
+          example: "ABHA-12345678"
+        external_worker_id:
+          type: string
+          nullable: true
+          description: Partner's internal worker identifier
+          example: "EMP-001"
+
+    WorkerWithHsaStatus:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        partner_id:
+          type: string
+          format: uuid
+        worker_user_id:
+          type: string
+          format: uuid
+        external_worker_id:
+          type: string
+          nullable: true
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        worker_phone:
+          type: string
+          nullable: true
+        worker_name:
+          type: string
+          nullable: true
+        has_hsa:
+          type: boolean
+        hsa_balance_paise:
+          type: integer
+          format: int64
+          nullable: true
+        hsa_total_contributed_paise:
+          type: integer
+          format: int64
+          nullable: true
+        insurance_eligible:
+          type: boolean
+          nullable: true
+
+    BulkContributionRequest:
+      type: object
+      required: [contributions]
+      properties:
+        contributions:
+          type: array
+          minItems: 1
+          maxItems: 1000
+          items:
+            type: object
+            required: [worker_phone, amount_paise, idempotency_key]
+            properties:
+              worker_phone:
+                type: string
+                example: "+919876543210"
+              amount_paise:
+                type: integer
+                format: int64
+                minimum: 1
+                example: 10000
+              idempotency_key:
+                type: string
+                example: "bulk-2024-01-15-emp001"
+
+    BulkContributionResult:
+      type: object
+      properties:
+        succeeded:
+          type: integer
+          format: int64
+          example: 48
+        failed:
+          type: integer
+          format: int64
+          example: 2
+        errors:
+          type: array
+          items:
+            type: string
+          example: ["User not found for phone: +919999999999"]
+
+    PartnerDashboard:
+      type: object
+      properties:
+        total_workers:
+          type: integer
+          format: int64
+          example: 150
+        total_contributed_paise:
+          type: integer
+          format: int64
+          example: 5000000
+        contribution_count:
+          type: integer
+          format: int64
+          example: 300
+        coverage_rate:
+          type: number
+          format: double
+          description: Fraction of workers with insurance-eligible HSA (0.0 to 1.0)
+          example: 0.75
+
+    ContributionReport:
+      type: object
+      properties:
+        rows:
+          type: array
+          items:
+            type: object
+            properties:
+              contribution_id:
+                type: string
+                format: uuid
+              worker_phone:
+                type: string
+              worker_name:
+                type: string
+                nullable: true
+              amount_paise:
+                type: integer
+                format: int64
+              currency:
+                type: string
+              status:
+                type: string
+              idempotency_key:
+                type: string
+              created_at:
+                type: string
+                format: date-time
+        total_amount_paise:
+          type: integer
+          format: int64
+        total_count:
+          type: integer
+          format: int64
+        page:
+          type: integer
+          format: int64
+        per_page:
+          type: integer
+          format: int64
+
+# ── Paths ──────────────────────────────────────────────────────────────────
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        "200":
+          description: Server is healthy
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/X-Request-Id"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  # ── Auth ─────────────────────────────────────────────────────────────────
+
+  /api/v1/auth/send-otp:
+    post:
+      tags: [Auth]
+      summary: Send OTP to phone number
+      operationId: sendOtp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendOtpRequest"
+      responses:
+        "200":
+          description: OTP sent successfully
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/X-Request-Id"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SendOtpResponse"
+        "400":
+          description: Invalid phone number or rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/auth/verify-otp:
+    post:
+      tags: [Auth]
+      summary: Verify OTP and obtain JWT tokens
+      operationId: verifyOtp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyOtpRequest"
+      responses:
+        "200":
+          description: Authentication successful
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/X-Request-Id"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid or expired OTP
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh an access token using a refresh token
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshRequest"
+      responses:
+        "200":
+          description: New access token issued
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/X-Request-Id"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RefreshResponse"
+        "401":
+          description: Invalid or expired refresh token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── HSA ──────────────────────────────────────────────────────────────────
+
+  /api/v1/hsa:
+    post:
+      tags: [HSA]
+      summary: Create a Health Savings Account
+      operationId: createHsa
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateHsaRequest"
+      responses:
+        "201":
+          description: HSA created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthSavingsAccount"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Only customers can create HSAs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: HSA already exists for this user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      tags: [HSA]
+      summary: Get current user's HSA
+      operationId: getHsa
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: HSA details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthSavingsAccount"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: HSA not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/hsa/dashboard:
+    get:
+      tags: [HSA]
+      summary: Get HSA dashboard with analytics
+      operationId: getHsaDashboard
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HsaDashboard"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: HSA not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Contributions ────────────────────────────────────────────────────────
+
+  /api/v1/contributions:
+    post:
+      tags: [Contributions]
+      summary: Create a contribution to the user's HSA
+      operationId: createContribution
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateContributionRequest"
+      responses:
+        "201":
+          description: Contribution created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contribution"
+        "200":
+          description: Idempotent hit - existing contribution returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contribution"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: HSA not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      tags: [Contributions]
+      summary: List contributions with pagination and filters
+      operationId: listContributions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: source_type
+          in: query
+          schema:
+            type: string
+            enum: [self, employer, platform, family, tip, csr, community, government]
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Paginated list of contributions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedContributions"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/contributions/summary:
+    get:
+      tags: [Contributions]
+      summary: Contribution summary by source and month
+      operationId: contributionSummary
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Summary data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContributionSummaryResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Insurance ────────────────────────────────────────────────────────────
+
+  /api/v1/insurance/plans:
+    get:
+      tags: [Insurance]
+      summary: List available insurance plans
+      operationId: listPlans
+      responses:
+        "200":
+          description: List of plans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InsurancePlan"
+
+  /api/v1/insurance/subscribe:
+    post:
+      tags: [Insurance]
+      summary: Subscribe to an insurance plan
+      operationId: subscribePlan
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubscribeRequest"
+      responses:
+        "201":
+          description: Policy created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InsurancePolicy"
+        "400":
+          description: Ineligible or insufficient balance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Plan not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Already subscribed to this plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/insurance/policies:
+    get:
+      tags: [Insurance]
+      summary: List user's insurance policies
+      operationId: listPolicies
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: List of policies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InsurancePolicy"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Claims ───────────────────────────────────────────────────────────────
+
+  /api/v1/claims:
+    post:
+      tags: [Claims]
+      summary: Submit an insurance claim
+      operationId: submitClaim
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitClaimRequest"
+      responses:
+        "201":
+          description: Claim submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Claim"
+        "400":
+          description: Amount exceeds coverage
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Policy not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      tags: [Claims]
+      summary: List user's claims
+      operationId: listClaims
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: List of claims
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Claim"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/claims/{id}/review:
+    patch:
+      tags: [Claims]
+      summary: Review a claim (operators only)
+      operationId: reviewClaim
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewClaimRequest"
+      responses:
+        "200":
+          description: Claim reviewed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Claim"
+        "400":
+          description: Invalid review status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Insufficient permissions (operator role required)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Claim not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Claim already finalized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Partners ─────────────────────────────────────────────────────────────
+
+  /api/v1/partners/register:
+    post:
+      tags: [Partners]
+      summary: Register as a partner
+      operationId: registerPartner
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterPartnerRequest"
+      responses:
+        "201":
+          description: Partner registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Partner"
+        "403":
+          description: Only partner accounts can register
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Partner already registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/partners/me:
+    get:
+      tags: [Partners]
+      summary: Get partner profile with stats
+      operationId: getPartner
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Partner profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PartnerProfile"
+        "404":
+          description: Partner not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/partners/workers:
+    post:
+      tags: [Partners]
+      summary: Add a worker to the partner
+      operationId: addWorker
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddWorkerRequest"
+      responses:
+        "201":
+          description: Worker added
+          content:
+            application/json:
+              schema:
+                type: object
+        "400":
+          description: Must provide phone or ABHA ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Worker already linked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      tags: [Partners]
+      summary: List workers with HSA status
+      operationId: listWorkers
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: List of workers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WorkerWithHsaStatus"
+
+  /api/v1/partners/contributions/bulk:
+    post:
+      tags: [Partners]
+      summary: Bulk contribute to multiple workers' HSAs
+      operationId: bulkContribute
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkContributionRequest"
+      responses:
+        "200":
+          description: Bulk contribution result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkContributionResult"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/partners/dashboard:
+    get:
+      tags: [Partners]
+      summary: Partner dashboard with analytics
+      operationId: partnerDashboard
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PartnerDashboard"
+
+  /api/v1/partners/reports:
+    get:
+      tags: [Partners]
+      summary: Contribution reports with pagination
+      operationId: partnerReports
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 1000
+      responses:
+        "200":
+          description: Contribution report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContributionReport"

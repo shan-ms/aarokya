@@ -43,7 +43,7 @@ pub fn encode_refresh_token(
     encode_token_with_type(user_id, user_type, secret, expiry_hours, "refresh")
 }
 
-fn encode_token_with_type(
+pub fn encode_token_with_type(
     user_id: Uuid,
     user_type: &str,
     secret: &str,
