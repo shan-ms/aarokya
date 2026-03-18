@@ -152,13 +152,32 @@ Aarokya v1 focuses on Phase 1: "Save & Insure" — building the Health Savings A
 - System health monitoring
 - Configuration management
 
+## Privacy & Consent (DPDP Act Compliance)
+
+Based on audit against India's Digital Personal Data Protection Act and health app benchmarks:
+
+- **Consent capture**: Plain language notice at onboarding — what we collect, why, who sees it
+- **Consent storage**: Database records with timestamps, purpose, and withdrawal capability
+- **Privacy center**: Settings screen with "What we collect" / "Why" / "Who you've shared with" / "Download my data" / "Delete my account"
+- **Data deletion**: API endpoint + UI flow for account/data erasure
+- **Consent withdrawal**: Must be as easy as giving consent (DPDP requirement)
+- **Record sharing**: Granular consent scopes — which records, which provider, time-limited, revocable
+
+## Safety & Trust Features
+
+- **Emergency safety mode**: Detect urgent red flags in check-in → emergency guidance + call prompt
+- **Safety disclaimer**: "This app can guide you, but it does not replace emergency services"
+- **Transparent pricing**: Clear cost breakdown visible before any transaction
+- **Clinician verification**: Display medical council registration for all teleconsult providers (required by telemedicine guidelines)
+- **AI guardrails**: AI/ML must NOT counsel or prescribe — assist registered doctors only (MoHFW telemedicine guidelines)
+
 ## Non-Functional Requirements
 - **Performance**: API response < 200ms p95, support 10K concurrent users
-- **Security**: AES-256 encryption at rest, TLS 1.3 in transit, OWASP top 10 compliance
-- **Privacy**: DPDP Act compliant, consent-driven data access, minimal collection
+- **Security**: AES-256 encryption at rest, TLS 1.3 in transit, OWASP top 10 compliance, OWASP MASVS for mobile
+- **Privacy**: DPDP Act compliant, consent-driven data access, minimal collection, data deletion capability
 - **Availability**: 99.9% uptime SLA
 - **Scalability**: Horizontal scaling, handle 1M+ transactions/day
-- **Accessibility**: WCAG 2.1 AA, support low-bandwidth connections
+- **Accessibility**: WCAG 2.2 AA, support low-bandwidth connections, voice-first option, large tap targets
 
 ## Data Model (Key Entities)
 - User (customer/partner/operator)
@@ -169,6 +188,8 @@ Aarokya v1 focuses on Phase 1: "Save & Insure" — building the Health Savings A
 - HealthProfile (user, conditions, medications, allergies)
 - Partner (type, workers, contribution_scheme)
 - AuditLog (actor, action, target, timestamp)
+- ConsentRecord (user, purpose, scope, granted_at, withdrawn_at)
+- FamilyProfile (caregiver_user, member_name, relationship, health_profile)
 
 ## API Design Principles
 - RESTful with OpenAPI 3.0 spec
@@ -178,3 +199,4 @@ Aarokya v1 focuses on Phase 1: "Save & Insure" — building the Health Savings A
 - Pagination, filtering, sorting on list endpoints
 - Idempotency keys for financial operations
 - Rate limiting per API key
+- Data deletion endpoints for DPDP compliance

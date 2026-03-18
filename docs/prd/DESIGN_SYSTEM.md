@@ -29,12 +29,15 @@
 5. **Low-bandwidth**: Optimized for 2G/3G connections
 
 ## Key Screens (Customer App)
-1. Onboarding: language → phone → OTP → ABHA link → health profile
-2. Home: HSA balance, insurance progress, quick actions, health tips
-3. HSA Detail: balance, contributions timeline, goal tracker
-4. Insurance: eligibility meter, coverage options, active policies
-5. Health: profile, medications, reminders, records
-6. Contributions: source breakdown, monthly trends
+1. Onboarding: language + "who is this for" → phone → OTP → intent selection → minimal profile → consent notice → ABHA link (optional) → progressive health profile
+2. Home: "Are you okay?" check-in CTA, HSA balance, quick actions (consult, book, records), trust strip
+3. Check-in: guided symptom triage → self-care / book consult / emergency guidance
+4. HSA Detail: balance, contributions timeline, goal tracker
+5. Insurance: eligibility meter, coverage options, active policies
+6. Records vault: upload/scan/tag medical documents, consent-based sharing
+7. Health: profile, medications, reminders
+8. Contributions: source breakdown, monthly trends
+9. Privacy center: consent management, data download, account deletion
 
 ## Key Screens (Partner App)
 1. Dashboard: enrolled workers, total contributions, impact metrics
