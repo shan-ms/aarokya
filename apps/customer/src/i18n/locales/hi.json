@@ -1,0 +1,126 @@
+{
+  "app_name": "आरोक्य",
+  "tagline": "आपका पॉकेट अस्पताल",
+  "welcome": {
+    "title": "आरोक्य में आपका स्वागत है",
+    "subtitle": "हर गिग वर्कर के लिए किफायती स्वास्थ्य बचत",
+    "get_started": "शुरू करें",
+    "select_language": "भाषा चुनें"
+  },
+  "auth": {
+    "phone_title": "अपना फ़ोन नंबर दर्ज करें",
+    "phone_subtitle": "हम आपको एक बार का सत्यापन कोड भेजेंगे",
+    "phone_placeholder": "10 अंकों का मोबाइल नंबर",
+    "send_otp": "OTP भेजें",
+    "otp_title": "OTP सत्यापित करें",
+    "otp_subtitle": "इस नंबर पर भेजा गया 6 अंकों का कोड दर्ज करें",
+    "verify": "सत्यापित करें",
+    "resend_otp": "OTP पुनः भेजें",
+    "resend_in": "{{seconds}} सेकंड में पुनः भेजें",
+    "invalid_phone": "कृपया एक वैध 10 अंकों का फ़ोन नंबर दर्ज करें",
+    "invalid_otp": "कृपया एक वैध 6 अंकों का OTP दर्ज करें"
+  },
+  "home": {
+    "greeting": "नमस्ते, {{name}}!",
+    "hsa_balance": "HSA शेष",
+    "add_money": "पैसे जोड़ें",
+    "insurance_progress": "बीमा पात्रता",
+    "progress_text": "₹{{target}} में से ₹{{current}} बचत",
+    "eligible": "आप बीमा के लिए पात्र हैं!",
+    "recent_contributions": "हाल के योगदान",
+    "view_all": "सभी देखें",
+    "no_contributions": "अभी तक कोई योगदान नहीं",
+    "start_saving": "अपना स्वास्थ्य कोष बनाने के लिए आज ही बचत शुरू करें"
+  },
+  "quick_actions": {
+    "contribute": "योगदान",
+    "insurance": "बीमा",
+    "health_records": "स्वास्थ्य रिकॉर्ड",
+    "help": "मदद"
+  },
+  "contribute": {
+    "title": "पैसे जोड़ें",
+    "subtitle": "अपने HSA में योगदान करने के लिए राशि चुनें",
+    "custom_amount": "कस्टम राशि",
+    "amount_placeholder": "₹ में राशि दर्ज करें",
+    "pay_via_upi": "UPI से भुगतान करें",
+    "min_amount": "न्यूनतम योगदान ₹10 है",
+    "success": "योगदान सफल!",
+    "failed": "योगदान विफल। कृपया पुनः प्रयास करें।"
+  },
+  "hsa_detail": {
+    "title": "योगदान इतिहास",
+    "all": "सभी",
+    "self": "स्वयं",
+    "employer": "नियोक्ता",
+    "government": "सरकार",
+    "cashback": "कैशबैक",
+    "referral": "रेफरल",
+    "no_history": "कोई योगदान नहीं मिला",
+    "no_history_subtitle": "आपका योगदान इतिहास यहाँ दिखाई देगा"
+  },
+  "insurance": {
+    "title": "बीमा",
+    "eligibility_meter": "पात्रता मीटर",
+    "available_plans": "उपलब्ध योजनाएं",
+    "active_policies": "सक्रिय पॉलिसियाँ",
+    "subscribe": "सदस्यता लें",
+    "coverage": "कवरेज",
+    "premium": "प्रीमियम",
+    "features": "विशेषताएं",
+    "no_plans": "कोई बीमा योजना उपलब्ध नहीं",
+    "no_policies": "कोई सक्रिय पॉलिसी नहीं",
+    "no_policies_subtitle": "कवर पाने के लिए एक योजना की सदस्यता लें",
+    "not_eligible": "पात्र बनने के लिए अधिक बचत करें",
+    "plan_basic": "बेसिक",
+    "plan_standard": "स्टैंडर्ड",
+    "plan_premium": "प्रीमियम"
+  },
+  "health": {
+    "title": "स्वास्थ्य प्रोफ़ाइल",
+    "dob": "जन्म तिथि",
+    "gender": "लिंग",
+    "blood_group": "रक्त समूह",
+    "height": "ऊंचाई (सेमी)",
+    "weight": "वजन (किग्रा)",
+    "conditions": "चिकित्सा स्थितियाँ",
+    "medications": "वर्तमान दवाइयाँ",
+    "allergies": "एलर्जी",
+    "emergency_contact": "आपातकालीन संपर्क",
+    "emergency_name": "संपर्क नाम",
+    "emergency_phone": "संपर्क फ़ोन",
+    "save": "प्रोफ़ाइल सहेजें",
+    "saved": "प्रोफ़ाइल सफलतापूर्वक सहेजी गई",
+    "male": "पुरुष",
+    "female": "महिला",
+    "other": "अन्य"
+  },
+  "profile": {
+    "title": "प्रोफ़ाइल",
+    "name": "नाम",
+    "phone": "फ़ोन",
+    "email": "ईमेल",
+    "language": "भाषा",
+    "app_version": "ऐप संस्करण",
+    "logout": "लॉगआउट",
+    "logout_confirm": "क्या आप वाकई लॉगआउट करना चाहते हैं?"
+  },
+  "common": {
+    "loading": "लोड हो रहा है...",
+    "error": "कुछ गलत हो गया",
+    "retry": "पुनः प्रयास करें",
+    "cancel": "रद्द करें",
+    "ok": "ठीक है",
+    "save": "सहेजें",
+    "done": "हो गया",
+    "per_month": "/माह",
+    "per_year": "/वर्ष"
+  },
+  "source": {
+    "self": "स्वयं का योगदान",
+    "employer": "नियोक्ता",
+    "government": "सरकारी सब्सिडी",
+    "platform_cashback": "प्लेटफ़ॉर्म कैशबैक",
+    "referral": "रेफरल बोनस"
+  }
+}

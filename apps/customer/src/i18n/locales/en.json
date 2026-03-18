@@ -1,0 +1,126 @@
+{
+  "app_name": "Aarokya",
+  "tagline": "Your Pocket Hospital",
+  "welcome": {
+    "title": "Welcome to Aarokya",
+    "subtitle": "Affordable healthcare savings for every gig worker",
+    "get_started": "Get Started",
+    "select_language": "Select Language"
+  },
+  "auth": {
+    "phone_title": "Enter Your Phone Number",
+    "phone_subtitle": "We'll send you a one-time verification code",
+    "phone_placeholder": "10-digit mobile number",
+    "send_otp": "Send OTP",
+    "otp_title": "Verify OTP",
+    "otp_subtitle": "Enter the 6-digit code sent to",
+    "verify": "Verify",
+    "resend_otp": "Resend OTP",
+    "resend_in": "Resend in {{seconds}}s",
+    "invalid_phone": "Please enter a valid 10-digit phone number",
+    "invalid_otp": "Please enter a valid 6-digit OTP"
+  },
+  "home": {
+    "greeting": "Hello, {{name}}!",
+    "hsa_balance": "HSA Balance",
+    "add_money": "Add Money",
+    "insurance_progress": "Insurance Eligibility",
+    "progress_text": "₹{{current}} of ₹{{target}} saved",
+    "eligible": "You are eligible for insurance!",
+    "recent_contributions": "Recent Contributions",
+    "view_all": "View All",
+    "no_contributions": "No contributions yet",
+    "start_saving": "Start saving today to build your health fund"
+  },
+  "quick_actions": {
+    "contribute": "Contribute",
+    "insurance": "Insurance",
+    "health_records": "Health Records",
+    "help": "Help"
+  },
+  "contribute": {
+    "title": "Add Money",
+    "subtitle": "Choose an amount to contribute to your HSA",
+    "custom_amount": "Custom Amount",
+    "amount_placeholder": "Enter amount in ₹",
+    "pay_via_upi": "Pay via UPI",
+    "min_amount": "Minimum contribution is ₹10",
+    "success": "Contribution successful!",
+    "failed": "Contribution failed. Please try again."
+  },
+  "hsa_detail": {
+    "title": "Contribution History",
+    "all": "All",
+    "self": "Self",
+    "employer": "Employer",
+    "government": "Government",
+    "cashback": "Cashback",
+    "referral": "Referral",
+    "no_history": "No contributions found",
+    "no_history_subtitle": "Your contribution history will appear here"
+  },
+  "insurance": {
+    "title": "Insurance",
+    "eligibility_meter": "Eligibility Meter",
+    "available_plans": "Available Plans",
+    "active_policies": "Active Policies",
+    "subscribe": "Subscribe",
+    "coverage": "Coverage",
+    "premium": "Premium",
+    "features": "Features",
+    "no_plans": "No insurance plans available",
+    "no_policies": "No active policies",
+    "no_policies_subtitle": "Subscribe to a plan to get covered",
+    "not_eligible": "Save more to become eligible",
+    "plan_basic": "Basic",
+    "plan_standard": "Standard",
+    "plan_premium": "Premium"
+  },
+  "health": {
+    "title": "Health Profile",
+    "dob": "Date of Birth",
+    "gender": "Gender",
+    "blood_group": "Blood Group",
+    "height": "Height (cm)",
+    "weight": "Weight (kg)",
+    "conditions": "Medical Conditions",
+    "medications": "Current Medications",
+    "allergies": "Allergies",
+    "emergency_contact": "Emergency Contact",
+    "emergency_name": "Contact Name",
+    "emergency_phone": "Contact Phone",
+    "save": "Save Profile",
+    "saved": "Profile saved successfully",
+    "male": "Male",
+    "female": "Female",
+    "other": "Other"
+  },
+  "profile": {
+    "title": "Profile",
+    "name": "Name",
+    "phone": "Phone",
+    "email": "Email",
+    "language": "Language",
+    "app_version": "App Version",
+    "logout": "Logout",
+    "logout_confirm": "Are you sure you want to logout?"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "ok": "OK",
+    "save": "Save",
+    "done": "Done",
+    "per_month": "/month",
+    "per_year": "/year"
+  },
+  "source": {
+    "self": "Self Contribution",
+    "employer": "Employer",
+    "government": "Government Subsidy",
+    "platform_cashback": "Platform Cashback",
+    "referral": "Referral Bonus"
+  }
+}
