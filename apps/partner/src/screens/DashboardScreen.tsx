@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,15 +6,16 @@ import {
   SafeAreaView,
   ScrollView,
   RefreshControl,
-  FlatList,
+  TouchableOpacity,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { spacing, borderRadius } from '../theme/spacing';
 import { useAuthStore } from '../store/authStore';
-import { usePartnerStore } from '../store/partnerStore';
-import { Contribution } from '../types';
+import { getDashboard } from '../api/partner';
+import { Contribution, PartnerDashboard } from '../types';
 import DashboardMetricCard from '../components/partner/DashboardMetricCard';
 import Button from '../components/common/Button';
 import LoadingSpinner from '../components/common/LoadingSpinner';
@@ -22,7 +23,9 @@ import EmptyState from '../components/common/EmptyState';
 import Card from '../components/common/Card';
 
 interface DashboardScreenProps {
-  navigation: { navigate: (screen: string) => void };
+  navigation: {
+    navigate: (screen: string, params?: Record<string, unknown>) => void;
+  };
 }
 
 const formatCurrency = (paise: number): string => {
@@ -49,25 +52,113 @@ const formatDate = (dateStr: string): string => {
   });
 };
 
+const CoverageProgressBar: React.FC<{ rate: number }> = ({ rate }) => {
+  const clampedRate = Math.min(Math.max(rate, 0), 100);
+  const progressColor =
+    clampedRate >= 75
+      ? colors.success
+      : clampedRate >= 50
+      ? colors.accent
+      : colors.error;
+
+  return (
+    <View style={progressStyles.container}>
+      <View style={progressStyles.header}>
+        <Text style={progressStyles.label}>Coverage Rate</Text>
+        <Text style={[progressStyles.value, { color: progressColor }]}>
+          {clampedRate}%
+        </Text>
+      </View>
+      <View style={progressStyles.trackContainer}>
+        <View style={progressStyles.track}>
+          <View
+            style={[
+              progressStyles.fill,
+              {
+                width: `${clampedRate}%`,
+                backgroundColor: progressColor,
+              },
+            ]}
+          />
+        </View>
+      </View>
+      <Text style={progressStyles.hint}>
+        {clampedRate >= 75
+          ? 'Excellent coverage'
+          : clampedRate >= 50
+          ? 'Good progress'
+          : 'Consider enrolling more workers'}
+      </Text>
+    </View>
+  );
+};
+
+const progressStyles = StyleSheet.create({
+  container: {
+    marginBottom: spacing.xxl,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  label: {
+    ...typography.label,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  value: {
+    ...typography.headlineLarge,
+  },
+  trackContainer: {
+    marginBottom: spacing.sm,
+  },
+  track: {
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.divider,
+    overflow: 'hidden',
+  },
+  fill: {
+    height: '100%',
+    borderRadius: 5,
+  },
+  hint: {
+    ...typography.caption,
+    color: colors.textTertiary,
+  },
+});
+
 const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
   const { t } = useTranslation();
   const partner = useAuthStore((state) => state.partner);
+
   const {
-    dashboard,
-    dashboardLoading,
-    dashboardError,
-    fetchDashboard,
-  } = usePartnerStore();
+    data: dashboardData,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isRefetching,
+  } = useQuery<PartnerDashboard>({
+    queryKey: ['partner-dashboard', partner?.id],
+    queryFn: async () => {
+      if (!partner?.id) throw new Error('No partner ID');
+      const response = await getDashboard(partner.id);
+      return response.data;
+    },
+    enabled: !!partner?.id,
+    staleTime: 30000,
+    refetchOnWindowFocus: true,
+  });
 
-  const loadDashboard = useCallback(() => {
-    if (partner?.id) {
-      fetchDashboard(partner.id);
-    }
-  }, [partner?.id, fetchDashboard]);
+  const dashboard = dashboardData ?? null;
 
-  useEffect(() => {
-    loadDashboard();
-  }, [loadDashboard]);
+  const handleRefresh = useCallback(() => {
+    refetch();
+  }, [refetch]);
 
   const renderActivityItem = ({ item }: { item: Contribution }) => (
     <View style={styles.activityItem}>
@@ -78,23 +169,38 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
         </Text>
         <Text style={styles.activityDate}>{formatDate(item.createdAt)}</Text>
       </View>
-      <Text style={styles.activityAmount}>
-        {formatFullCurrency(item.amountPaise)}
-      </Text>
+      <View style={styles.activityRight}>
+        <Text style={styles.activityAmount}>
+          {formatFullCurrency(item.amountPaise)}
+        </Text>
+        <View
+          style={[
+            styles.activityStatusDot,
+            {
+              backgroundColor:
+                item.status === 'completed'
+                  ? colors.success
+                  : item.status === 'pending'
+                  ? colors.warning
+                  : colors.error,
+            },
+          ]}
+        />
+      </View>
     </View>
   );
 
-  if (dashboardLoading && !dashboard) {
+  if (isLoading) {
     return <LoadingSpinner fullScreen message={t('common.loading')} />;
   }
 
-  if (dashboardError && !dashboard) {
+  if (isError && !dashboard) {
     return (
       <EmptyState
         title={t('common.error')}
-        description={dashboardError}
+        description={error instanceof Error ? error.message : t('common.error')}
         actionLabel={t('common.retry')}
-        onAction={loadDashboard}
+        onAction={handleRefresh}
       />
     );
   }
@@ -106,18 +212,31 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
         contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl
-            refreshing={dashboardLoading}
-            onRefresh={loadDashboard}
+            refreshing={isRefetching}
+            onRefresh={handleRefresh}
             tintColor={colors.primary}
           />
         }
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={styles.greeting}>
-            {t('dashboard.greeting')}, {partner?.businessName ?? 'Partner'}
-          </Text>
-          <Text style={styles.title}>{t('dashboard.title')}</Text>
+          <View style={styles.headerRow}>
+            <View style={styles.headerText}>
+              <Text style={styles.greeting}>
+                {t('dashboard.greeting')}, {partner?.businessName ?? 'Partner'}
+              </Text>
+              <Text style={styles.title}>{t('dashboard.title')}</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.profileButton}
+              onPress={() => navigation.navigate('Profile')}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.profileButtonText}>
+                {partner?.businessName?.charAt(0).toUpperCase() ?? 'P'}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.metricsRow}>
@@ -125,20 +244,20 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
             icon={<Text style={styles.metricIcon}>P</Text>}
             label={t('dashboard.totalWorkers')}
             value={String(dashboard?.totalWorkers ?? 0)}
+            onPress={() => navigation.navigate('WorkersTab')}
           />
           <View style={styles.metricGap} />
           <DashboardMetricCard
             icon={<Text style={styles.metricIcon}>{'\u20b9'}</Text>}
             label={t('dashboard.totalContributed')}
             value={formatCurrency(dashboard?.totalContributedPaise ?? 0)}
-          />
-          <View style={styles.metricGap} />
-          <DashboardMetricCard
-            icon={<Text style={styles.metricIcon}>%</Text>}
-            label={t('dashboard.coverageRate')}
-            value={`${dashboard?.coverageRate ?? 0}%`}
+            onPress={() => navigation.navigate('ReportsTab')}
           />
         </View>
+
+        <Card style={styles.coverageCard}>
+          <CoverageProgressBar rate={dashboard?.coverageRate ?? 0} />
+        </Card>
 
         <View style={styles.actionsRow}>
           <Button
@@ -198,6 +317,27 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: spacing.xxl,
   },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  headerText: {
+    flex: 1,
+  },
+  profileButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: spacing.md,
+  },
+  profileButtonText: {
+    ...typography.headlineSmall,
+    color: colors.primary,
+  },
   greeting: {
     ...typography.bodyMedium,
     color: colors.textSecondary,
@@ -209,7 +349,7 @@ const styles = StyleSheet.create({
   },
   metricsRow: {
     flexDirection: 'row',
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.md,
   },
   metricGap: {
     width: spacing.sm,
@@ -218,6 +358,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: colors.primary,
+  },
+  coverageCard: {
+    marginBottom: spacing.xxl,
+    paddingBottom: spacing.sm,
   },
   actionsRow: {
     flexDirection: 'row',
@@ -268,10 +412,20 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
     marginTop: 2,
   },
+  activityRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   activityAmount: {
     ...typography.bodyLarge,
     fontWeight: '700',
     color: colors.secondary,
+    marginRight: spacing.sm,
+  },
+  activityStatusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   activityDivider: {
     height: 1,

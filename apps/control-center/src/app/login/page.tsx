@@ -1,22 +1,42 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
+import { useToast } from '@/components/ui/Toast';
+import { requestOtp } from '@/lib/services';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import { Phone, Shield } from 'lucide-react';
-import api from '@/lib/api';
+import { Phone, Shield, Heart } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const login = useAuthStore((s) => s.login);
+  const searchParams = useSearchParams();
+  const { login, isAuthenticated } = useAuthStore();
+  const { toast } = useToast();
 
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [cooldown, setCooldown] = useState(0);
+
+  const redirect = searchParams.get('redirect') || '/dashboard';
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.replace(redirect);
+    }
+  }, [isAuthenticated, router, redirect]);
+
+  // OTP resend cooldown timer
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => setCooldown((c) => c - 1), 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
   const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,10 +44,27 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await api.post('/auth/request-otp', { phone: `+91${phone}` });
+      await requestOtp(`+91${phone}`);
       setStep('otp');
+      setCooldown(30);
+      toast('success', 'OTP Sent', `A verification code has been sent to +91 ${phone}`);
     } catch {
       setError('Failed to send OTP. Please check your phone number.');
+      toast('error', 'OTP Failed', 'Could not send OTP. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (cooldown > 0) return;
+    setLoading(true);
+    try {
+      await requestOtp(`+91${phone}`);
+      setCooldown(30);
+      toast('info', 'OTP Resent', 'A new verification code has been sent.');
+    } catch {
+      toast('error', 'Resend Failed', 'Could not resend OTP.');
     } finally {
       setLoading(false);
     }
@@ -40,9 +77,16 @@ export default function LoginPage() {
 
     try {
       await login(`+91${phone}`, otp);
-      router.replace('/dashboard');
+      // Also set cookie for middleware
+      const token = localStorage.getItem('aarokya_cc_token');
+      if (token) {
+        document.cookie = `aarokya_cc_token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+      }
+      toast('success', 'Welcome!', 'You have been signed in successfully.');
+      router.replace(redirect);
     } catch {
       setError('Invalid OTP. Please try again.');
+      toast('error', 'Verification Failed', 'The OTP you entered is invalid.');
     } finally {
       setLoading(false);
     }
@@ -52,8 +96,8 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary-50 via-white to-secondary-50 px-4">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-white">
-            <Shield className="h-8 w-8" />
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/25">
+            <Heart className="h-8 w-8" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Aarokya Control Center</h1>
           <p className="mt-1 text-sm text-gray-500">Operator dashboard for healthcare management</p>
@@ -119,17 +163,27 @@ export default function LoginPage() {
                 Verify & Sign In
               </Button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setStep('phone');
-                  setOtp('');
-                  setError('');
-                }}
-                className="w-full text-center text-sm text-primary hover:underline"
-              >
-                Change phone number
-              </button>
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStep('phone');
+                    setOtp('');
+                    setError('');
+                  }}
+                  className="text-sm text-primary hover:underline"
+                >
+                  Change phone number
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  disabled={cooldown > 0 || loading}
+                  className="text-sm text-primary hover:underline disabled:text-gray-400 disabled:no-underline"
+                >
+                  {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend OTP'}
+                </button>
+              </div>
             </form>
           )}
         </div>
