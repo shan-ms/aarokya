@@ -20,7 +20,7 @@ import { colors } from '../theme/colors';
 import { spacing, borderRadius } from '../theme/spacing';
 import { typography } from '../theme/typography';
 
-const PRESET_AMOUNTS = [50, 100, 200, 500];
+const PRESET_AMOUNTS = [100, 500, 1000, 2000];
 
 const ContributeScreen: React.FC = () => {
   const { t } = useTranslation();

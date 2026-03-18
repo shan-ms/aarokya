@@ -3,6 +3,7 @@
 import React, { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/authStore';
+import { ToastProvider } from '@/components/ui/Toast';
 import './globals.css';
 
 const queryClient = new QueryClient({
@@ -42,7 +43,9 @@ export default function RootLayout({
       </head>
       <body>
         <QueryClientProvider client={queryClient}>
-          <AuthInitializer>{children}</AuthInitializer>
+          <ToastProvider>
+            <AuthInitializer>{children}</AuthInitializer>
+          </ToastProvider>
         </QueryClientProvider>
       </body>
     </html>

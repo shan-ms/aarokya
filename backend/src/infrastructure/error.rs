@@ -25,6 +25,8 @@ pub enum AppError {
     Database(#[from] sqlx::Error),
     #[error("Validation error: {0}")]
     Validation(String),
+    #[error("Too many requests: {0}")]
+    TooManyRequests(String),
 }
 
 impl ResponseError for AppError {
@@ -40,6 +42,10 @@ impl ResponseError for AppError {
             AppError::Validation(_) => {
                 (actix_web::http::StatusCode::BAD_REQUEST, "validation_error")
             }
+            AppError::TooManyRequests(_) => (
+                actix_web::http::StatusCode::TOO_MANY_REQUESTS,
+                "too_many_requests",
+            ),
             AppError::Internal(_) | AppError::Database(_) => (
                 actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
                 "internal_error",

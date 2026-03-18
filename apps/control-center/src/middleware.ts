@@ -16,34 +16,33 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check for auth token in cookies or try localStorage via header
+  // Check for auth token in cookies
   const token = request.cookies.get('aarokya_cc_token')?.value;
 
-  if (!token) {
-    // For client-side navigation, the token is in localStorage.
-    // Middleware runs on the server, so we check for the cookie.
-    // If no cookie, we allow the request through and let client-side
-    // auth handle the redirect (via useAuthStore).
-    // For a stricter approach, set the token as an httpOnly cookie on login.
-    return NextResponse.next();
-  }
-
-  // Verify token is not expired
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    const expiry = payload.exp * 1000;
-    if (Date.now() >= expiry) {
+  if (token) {
+    // Verify token is not expired
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const expiry = payload.exp * 1000;
+      if (Date.now() >= expiry) {
+        const loginUrl = new URL('/login', request.url);
+        loginUrl.searchParams.set('redirect', pathname);
+        const response = NextResponse.redirect(loginUrl);
+        response.cookies.delete('aarokya_cc_token');
+        return response;
+      }
+    } catch {
+      // Invalid token format, redirect to login
       const loginUrl = new URL('/login', request.url);
       const response = NextResponse.redirect(loginUrl);
       response.cookies.delete('aarokya_cc_token');
       return response;
     }
-  } catch {
-    // Invalid token format, redirect to login
-    const loginUrl = new URL('/login', request.url);
-    return NextResponse.redirect(loginUrl);
   }
 
+  // For client-side auth (localStorage), we allow through and let
+  // the dashboard layout handle redirect via useAuthStore.
+  // The middleware protects against server-side access with expired cookies.
   return NextResponse.next();
 }
 

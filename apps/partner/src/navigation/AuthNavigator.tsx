@@ -1,11 +1,14 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { colors } from '../theme/colors';
+import { PartnerType } from '../types';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import PhoneInputScreen from '../screens/auth/PhoneInputScreen';
 import OTPScreen from '../screens/auth/OTPScreen';
 import BusinessTypeScreen from '../screens/onboarding/BusinessTypeScreen';
 import BusinessDetailsScreen from '../screens/onboarding/BusinessDetailsScreen';
+import VerificationScreen from '../screens/onboarding/VerificationScreen';
+import ContributionSchemeScreen from '../screens/onboarding/ContributionSchemeScreen';
 
 export type AuthStackParamList = {
   Welcome: undefined;
@@ -13,6 +16,18 @@ export type AuthStackParamList = {
   OTP: { phone: string; requestId: string };
   BusinessType: { phone: string };
   BusinessDetails: { phone: string; partnerType: string };
+  Verification: {
+    phone: string;
+    partnerType: string;
+    businessName: string;
+    registrationNumber: string;
+  };
+  ContributionScheme: {
+    phone: string;
+    partnerType: PartnerType;
+    businessName: string;
+    registrationNumber: string;
+  };
 };
 
 const Stack = createStackNavigator<AuthStackParamList>();
@@ -61,6 +76,16 @@ const AuthNavigator: React.FC = () => {
         name="BusinessDetails"
         component={BusinessDetailsScreen}
         options={{ title: 'Business Details' }}
+      />
+      <Stack.Screen
+        name="Verification"
+        component={VerificationScreen}
+        options={{ title: 'Verification' }}
+      />
+      <Stack.Screen
+        name="ContributionScheme"
+        component={ContributionSchemeScreen}
+        options={{ title: 'Contribution Scheme' }}
       />
     </Stack.Navigator>
   );

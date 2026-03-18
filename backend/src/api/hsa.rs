@@ -1,8 +1,11 @@
 use actix_web::{web, HttpResponse};
 use sqlx::PgPool;
 use uuid::Uuid;
+use validator::Validate;
 
-use crate::domain::hsa::{CreateHsaRequest, HsaDashboard, HealthSavingsAccount};
+use crate::domain::hsa::{
+    self, CreateHsaRequest, HsaDashboard, HealthSavingsAccount,
+};
 use crate::infrastructure::auth::AuthenticatedUser;
 use crate::infrastructure::error::AppError;
 
@@ -11,6 +14,10 @@ pub async fn create_hsa(
     pool: web::Data<PgPool>,
     body: web::Json<CreateHsaRequest>,
 ) -> Result<HttpResponse, AppError> {
+    // Validate input
+    body.validate()
+        .map_err(|e| AppError::Validation(format!("{}", e)))?;
+
     if auth.user_type != "customer" {
         return Err(AppError::Forbidden(
             "Only customers can create HSA accounts".to_string(),
@@ -50,6 +57,15 @@ pub async fn create_hsa(
         .execute(pool.get_ref())
         .await?;
 
+    // Audit log
+    tracing::info!(
+        event = "hsa_created",
+        user_id = %auth.user_id,
+        hsa_id = %hsa.id,
+        abha_id = %body.abha_id,
+        "HSA account created"
+    );
+
     Ok(HttpResponse::Created().json(hsa))
 }
 
@@ -65,11 +81,15 @@ pub async fn get_hsa(
     .await?
     .ok_or_else(|| AppError::NotFound("HSA account not found".to_string()))?;
 
+    tracing::info!(
+        event = "hsa_viewed",
+        user_id = %auth.user_id,
+        hsa_id = %hsa.id,
+        "HSA account viewed"
+    );
+
     Ok(HttpResponse::Ok().json(hsa))
 }
-
-const BASIC_INSURANCE_THRESHOLD: i64 = 399_900; // 3999 INR in paise
-const PREMIUM_INSURANCE_THRESHOLD: i64 = 1_000_000; // 10000 INR in paise
 
 pub async fn get_dashboard(
     auth: AuthenticatedUser,
@@ -89,19 +109,90 @@ pub async fn get_dashboard(
             .fetch_one(pool.get_ref())
             .await?;
 
-    let basic_progress =
-        (hsa.total_contributed_paise as f64 / BASIC_INSURANCE_THRESHOLD as f64).min(1.0);
-    let premium_progress =
-        (hsa.total_contributed_paise as f64 / PREMIUM_INSURANCE_THRESHOLD as f64).min(1.0);
+    // Calculate account age in days for velocity
+    let account_age_days = hsa
+        .created_at
+        .map(|created| {
+            let now = chrono::Utc::now();
+            (now - created).num_days()
+        })
+        .unwrap_or(0);
+
+    let velocity = hsa::contribution_velocity(hsa.total_contributed_paise, account_age_days);
 
     let dashboard = HsaDashboard {
         balance_paise: hsa.balance_paise,
         total_contributed_paise: hsa.total_contributed_paise,
         insurance_eligible: hsa.insurance_eligible.unwrap_or(false),
-        basic_insurance_progress: basic_progress,
-        premium_insurance_progress: premium_progress,
+        basic_insurance_progress: hsa::basic_progress(hsa.total_contributed_paise),
+        premium_insurance_progress: hsa::premium_progress(hsa.total_contributed_paise),
         contribution_count: contribution_count.0,
+        contribution_velocity_paise_per_month: velocity,
+        insurance_tier: hsa::insurance_tier(hsa.total_contributed_paise).to_string(),
     };
 
+    tracing::info!(
+        event = "dashboard_viewed",
+        user_id = %auth.user_id,
+        hsa_id = %hsa.id,
+        balance_paise = hsa.balance_paise,
+        insurance_tier = %dashboard.insurance_tier,
+        "Dashboard viewed"
+    );
+
     Ok(HttpResponse::Ok().json(dashboard))
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::domain::hsa;
+
+    #[test]
+    fn test_dashboard_insurance_tier_logic() {
+        // Verify the domain functions used by dashboard
+        assert_eq!(hsa::insurance_tier(0), "none");
+        assert_eq!(hsa::insurance_tier(399_900), "basic");
+        assert_eq!(hsa::insurance_tier(1_000_000), "premium");
+    }
+
+    #[test]
+    fn test_dashboard_progress_calculations() {
+        let basic = hsa::basic_progress(200_000);
+        assert!(basic > 0.0 && basic < 1.0);
+
+        let premium = hsa::premium_progress(500_000);
+        assert!(premium > 0.0 && premium < 1.0);
+    }
+
+    #[test]
+    fn test_dashboard_velocity_new_account() {
+        let velocity = hsa::contribution_velocity(100_000, 0);
+        assert_eq!(velocity, 3_000_000.0); // extrapolated for 30 days
+    }
+
+    #[test]
+    fn test_dashboard_velocity_established_account() {
+        let velocity = hsa::contribution_velocity(300_000, 90);
+        // 90 days = 3 months, so velocity = 300000 / 3 = 100000
+        assert!((velocity - 100_000.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_eligibility_thresholds() {
+        // Basic threshold: 399900 paise = 3999 INR
+        assert!(!hsa::is_basic_eligible(399_899));
+        assert!(hsa::is_basic_eligible(399_900));
+
+        // Premium threshold: 1000000 paise = 10000 INR
+        assert!(!hsa::is_premium_eligible(999_999));
+        assert!(hsa::is_premium_eligible(1_000_000));
+    }
+
+    #[test]
+    fn test_insurance_eligibility_percentage() {
+        assert!((hsa::insurance_eligibility_percentage(0) - 0.0).abs() < f64::EPSILON);
+        assert!((hsa::insurance_eligibility_percentage(399_900) - 100.0).abs() < f64::EPSILON);
+        // Over 100% should cap at 100
+        assert!((hsa::insurance_eligibility_percentage(800_000) - 100.0).abs() < f64::EPSILON);
+    }
 }

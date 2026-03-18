@@ -64,6 +64,46 @@
     "contributionAmountPlaceholder": "Amount in \u20b9",
     "register": "Register"
   },
+  "verification": {
+    "title": "Document Verification",
+    "subtitle": "Upload required documents to verify your business identity",
+    "gstCertificate": "GST Certificate",
+    "gstPlaceholder": "Upload your GST registration certificate",
+    "panCard": "PAN Card",
+    "panPlaceholder": "Upload your business PAN card",
+    "verificationStatus": "Verification Status",
+    "allUploaded": "All documents uploaded. Under review.",
+    "pendingDocuments": "Some documents are pending upload.",
+    "uploadDocument": "Upload Document",
+    "uploading": "Uploading...",
+    "reupload": "Re-upload",
+    "skipTitle": "Skip Verification?",
+    "skipMessage": "You can upload documents later from your profile. Some features may be limited until verification is complete.",
+    "skipConfirm": "Skip for Now",
+    "skipForNow": "Skip for now"
+  },
+  "contributionScheme": {
+    "title": "Contribution Scheme",
+    "subtitle": "Choose how you want to contribute to your workers' health savings",
+    "chooseScheme": "Choose Scheme Type",
+    "fixedMonthly": "Fixed Monthly",
+    "fixedMonthlyDesc": "Contribute a fixed amount every month per worker",
+    "percentageWage": "Percentage of Wage",
+    "percentageWageDesc": "Contribute a percentage of each worker's wage",
+    "oneTime": "One-Time Contribution",
+    "oneTimeDesc": "Make a single contribution per worker",
+    "monthlyAmount": "Monthly Amount per Worker",
+    "percentage": "Percentage of Wage",
+    "oneTimeAmount": "One-Time Amount per Worker",
+    "amountPlaceholder": "Enter amount",
+    "percentagePlaceholder": "Enter percentage (1-100)",
+    "percentageHint": "Percentage of worker's monthly wage to contribute",
+    "schemeType": "Scheme Type",
+    "amount": "Amount / Rate",
+    "confirmationTitle": "Scheme Summary",
+    "confirmNote": "You can change your contribution scheme later from your profile settings.",
+    "completeRegistration": "Complete Registration"
+  },
   "dashboard": {
     "title": "Dashboard",
     "greeting": "Welcome back",
@@ -94,8 +134,8 @@
     "subtitle": "Search for a worker by phone number or ABHA ID",
     "phonePlaceholder": "Phone number",
     "abhaPlaceholder": "ABHA ID",
-    "searchByPhone": "Search by Phone",
-    "searchByAbha": "Search by ABHA ID",
+    "searchByPhone": "By Phone",
+    "searchByAbha": "By ABHA",
     "workerFound": "Worker Found",
     "workerNotFound": "No worker found with this information",
     "enrollWorker": "Enroll Worker",
@@ -142,7 +182,10 @@
     "payViaUpi": "Pay via UPI",
     "processing": "Processing payment...",
     "success": "Payment successful!",
-    "failed": "Payment failed. Please try again."
+    "failed": "Payment failed. Please try again.",
+    "confirmTitle": "Confirm Payment",
+    "confirmMessage": "You are about to pay {{amount}} for {{count}} worker(s). This action cannot be undone.",
+    "confirmPay": "Yes, Pay Now"
   },
   "reports": {
     "title": "Reports",
@@ -156,7 +199,8 @@
     "noReports": "No reports available",
     "noReportsDesc": "Generate a report to see contribution summaries",
     "download": "Download",
-    "export": "Export CSV"
+    "export": "Export CSV",
+    "exportSuccess": "CSV export initiated. You will receive the file shortly."
   },
   "profile": {
     "title": "Profile",

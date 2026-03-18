@@ -5,24 +5,20 @@ import {
   StyleSheet,
   SafeAreaView,
   ScrollView,
-  TouchableOpacity,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { PartnerType, ContributionSchemeType } from '../../types';
+import { PartnerType } from '../../types';
 import { colors } from '../../theme/colors';
 import { typography } from '../../theme/typography';
-import { spacing, borderRadius } from '../../theme/spacing';
-import { registerPartner } from '../../api/partner';
-import { useAuthStore } from '../../store/authStore';
+import { spacing } from '../../theme/spacing';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 
 interface BusinessDetailsScreenProps {
   navigation: {
-    navigate: (screen: string) => void;
+    navigate: (screen: string, params?: Record<string, unknown>) => void;
   };
   route: {
     params: {
@@ -38,42 +34,22 @@ const BusinessDetailsScreen: React.FC<BusinessDetailsScreenProps> = ({
 }) => {
   const { t } = useTranslation();
   const { phone, partnerType } = route.params;
-  const setPartner = useAuthStore((state) => state.setPartner);
 
   const [businessName, setBusinessName] = useState('');
   const [registrationNumber, setRegistrationNumber] = useState('');
-  const [schemeType, setSchemeType] = useState<ContributionSchemeType>('per_task');
-  const [amountText, setAmountText] = useState('');
-  const [loading, setLoading] = useState(false);
 
   const isValid =
     businessName.trim().length > 0 &&
-    registrationNumber.trim().length > 0 &&
-    amountText.length > 0 &&
-    parseFloat(amountText) > 0;
+    registrationNumber.trim().length > 0;
 
-  const handleRegister = async () => {
+  const handleNext = () => {
     if (!isValid) return;
-
-    setLoading(true);
-    try {
-      const amountPaise = Math.round(parseFloat(amountText) * 100);
-      const response = await registerPartner({
-        phone,
-        businessName: businessName.trim(),
-        registrationNumber: registrationNumber.trim(),
-        partnerType,
-        contributionSchemeType: schemeType,
-        contributionAmountPaise: amountPaise,
-      });
-      setPartner(response.data);
-      // AppNavigator will redirect to main since partner is now set
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Registration failed';
-      Alert.alert(t('common.error'), message);
-    } finally {
-      setLoading(false);
-    }
+    navigation.navigate('Verification', {
+      phone,
+      partnerType,
+      businessName: businessName.trim(),
+      registrationNumber: registrationNumber.trim(),
+    });
   };
 
   return (
@@ -110,68 +86,12 @@ const BusinessDetailsScreen: React.FC<BusinessDetailsScreenProps> = ({
             onChangeText={setRegistrationNumber}
             autoCapitalize="characters"
           />
-
-          <Text style={styles.sectionLabel}>
-            {t('onboarding.contributionScheme')}
-          </Text>
-          <View style={styles.schemeRow}>
-            <TouchableOpacity
-              style={[
-                styles.schemeOption,
-                schemeType === 'per_task' && styles.schemeOptionActive,
-              ]}
-              onPress={() => setSchemeType('per_task')}
-            >
-              <Text
-                style={[
-                  styles.schemeLabel,
-                  schemeType === 'per_task' && styles.schemeLabelActive,
-                ]}
-              >
-                {t('onboarding.perTask')}
-              </Text>
-              <Text style={styles.schemeDesc}>{t('onboarding.perTaskDesc')}</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.schemeOption,
-                schemeType === 'monthly_fixed' && styles.schemeOptionActive,
-              ]}
-              onPress={() => setSchemeType('monthly_fixed')}
-            >
-              <Text
-                style={[
-                  styles.schemeLabel,
-                  schemeType === 'monthly_fixed' && styles.schemeLabelActive,
-                ]}
-              >
-                {t('onboarding.monthlyFixed')}
-              </Text>
-              <Text style={styles.schemeDesc}>{t('onboarding.monthlyFixedDesc')}</Text>
-            </TouchableOpacity>
-          </View>
-
-          <Input
-            label={t('onboarding.contributionAmount')}
-            placeholder={t('onboarding.contributionAmountPlaceholder')}
-            keyboardType="numeric"
-            value={amountText}
-            onChangeText={(text) => setAmountText(text.replace(/[^0-9.]/g, ''))}
-            leftIcon={<Text style={styles.rupee}>{'\u20b9'}</Text>}
-            hint={
-              schemeType === 'per_task'
-                ? 'Amount contributed per completed task'
-                : 'Fixed monthly amount per worker'
-            }
-          />
         </ScrollView>
 
         <View style={styles.footer}>
           <Button
-            title={t('onboarding.register')}
-            onPress={handleRegister}
-            loading={loading}
+            title={t('common.next')}
+            onPress={handleNext}
             disabled={!isValid}
             size="lg"
             style={styles.button}
@@ -206,47 +126,6 @@ const styles = StyleSheet.create({
   subtitle: {
     ...typography.bodyLarge,
     color: colors.textSecondary,
-  },
-  sectionLabel: {
-    ...typography.label,
-    color: colors.textPrimary,
-    marginBottom: spacing.sm,
-  },
-  schemeRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    marginBottom: spacing.xxl,
-  },
-  schemeOption: {
-    flex: 1,
-    padding: spacing.lg,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  schemeOptionActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primaryLight,
-  },
-  schemeLabel: {
-    ...typography.bodyLarge,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginBottom: spacing.xs,
-  },
-  schemeLabelActive: {
-    color: colors.primary,
-  },
-  schemeDesc: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    lineHeight: 16,
-  },
-  rupee: {
-    ...typography.bodyLarge,
-    fontWeight: '600',
-    color: colors.textPrimary,
   },
   footer: {
     padding: spacing.xxl,

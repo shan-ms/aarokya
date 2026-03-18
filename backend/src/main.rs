@@ -32,9 +32,8 @@ async fn main() -> std::io::Result<()> {
 
     let config_data = web::Data::new(config);
     let pool_data = web::Data::new(pool);
-    let otp_store = web::Data::new(std::sync::Mutex::new(
-        std::collections::HashMap::<String, String>::new(),
-    ));
+    let otp_store = web::Data::new(api::auth::OtpStore::default());
+    let rate_limit_store = web::Data::new(api::auth::RateLimitStore::default());
 
     HttpServer::new(move || {
         let cors = Cors::default()
@@ -49,6 +48,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(config_data.clone())
             .app_data(pool_data.clone())
             .app_data(otp_store.clone())
+            .app_data(rate_limit_store.clone())
             .service(api::health::health_check)
             .service(
                 web::scope("/api/v1")
@@ -83,7 +83,8 @@ async fn main() -> std::io::Result<()> {
                                 "/contributions/bulk",
                                 web::post().to(api::partners::bulk_contribute),
                             )
-                            .route("/dashboard", web::get().to(api::partners::partner_dashboard)),
+                            .route("/dashboard", web::get().to(api::partners::partner_dashboard))
+                            .route("/reports", web::get().to(api::partners::partner_reports)),
                     )
                     .service(
                         web::scope("/insurance")

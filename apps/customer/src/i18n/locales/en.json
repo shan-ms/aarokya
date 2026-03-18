@@ -20,12 +20,27 @@
     "invalid_phone": "Please enter a valid 10-digit phone number",
     "invalid_otp": "Please enter a valid 6-digit OTP"
   },
+  "abha": {
+    "title": "Link Your ABHA ID",
+    "subtitle": "Link your Ayushman Bharat Health Account for seamless access",
+    "label": "ABHA Number",
+    "format_hint": "Format: XX-XXXX-XXXX-XXXX (14 digits)",
+    "invalid_format": "Please enter a valid ABHA number (XX-XXXX-XXXX-XXXX)",
+    "link_button": "Link ABHA",
+    "skip": "Skip for Now"
+  },
+  "health_setup": {
+    "title": "Set Up Health Profile",
+    "subtitle": "Help us personalize your healthcare experience",
+    "age": "Age",
+    "complete": "Complete Setup"
+  },
   "home": {
     "greeting": "Hello, {{name}}!",
     "hsa_balance": "HSA Balance",
     "add_money": "Add Money",
     "insurance_progress": "Insurance Eligibility",
-    "progress_text": "₹{{current}} of ₹{{target}} saved",
+    "progress_text": "\u20b9{{current}} of \u20b9{{target}} saved",
     "eligible": "You are eligible for insurance!",
     "recent_contributions": "Recent Contributions",
     "view_all": "View All",
@@ -42,9 +57,9 @@
     "title": "Add Money",
     "subtitle": "Choose an amount to contribute to your HSA",
     "custom_amount": "Custom Amount",
-    "amount_placeholder": "Enter amount in ₹",
+    "amount_placeholder": "Enter amount",
     "pay_via_upi": "Pay via UPI",
-    "min_amount": "Minimum contribution is ₹10",
+    "min_amount": "Minimum contribution is \u20b910",
     "success": "Contribution successful!",
     "failed": "Contribution failed. Please try again."
   },
@@ -52,12 +67,14 @@
     "title": "Contribution History",
     "all": "All",
     "self": "Self",
+    "partner": "Partner",
     "employer": "Employer",
     "government": "Government",
     "cashback": "Cashback",
     "referral": "Referral",
     "no_history": "No contributions found",
-    "no_history_subtitle": "Your contribution history will appear here"
+    "no_history_subtitle": "Your contribution history will appear here",
+    "monthly_chart": "Monthly Overview"
   },
   "insurance": {
     "title": "Insurance",
@@ -76,6 +93,29 @@
     "plan_standard": "Standard",
     "plan_premium": "Premium"
   },
+  "claims": {
+    "title": "Claims",
+    "submit_claim": "Submit New Claim",
+    "hospital_name": "Hospital Name",
+    "diagnosis": "Diagnosis",
+    "amount": "Claim Amount (\u20b9)",
+    "documents": "Documents",
+    "upload_documents": "Upload Documents",
+    "document_placeholder": "Tap to upload supporting documents",
+    "submit": "Submit Claim",
+    "success": "Claim submitted successfully!",
+    "failed": "Failed to submit claim. Please try again.",
+    "history": "Claims History",
+    "no_claims": "No claims yet",
+    "no_claims_subtitle": "Your claims history will appear here",
+    "status_submitted": "Submitted",
+    "status_under_review": "Under Review",
+    "status_approved": "Approved",
+    "status_rejected": "Rejected",
+    "status_paid": "Paid",
+    "select_policy": "Select Policy",
+    "no_active_policies": "No active policies to claim against"
+  },
   "health": {
     "title": "Health Profile",
     "dob": "Date of Birth",
@@ -91,6 +131,12 @@
     "emergency_phone": "Contact Phone",
     "save": "Save Profile",
     "saved": "Profile saved successfully",
+    "edit": "Edit",
+    "view_mode": "View Mode",
+    "edit_mode": "Edit Mode",
+    "medication_reminders": "Medication Reminders",
+    "add_reminder": "Add Reminder",
+    "no_reminders": "No medication reminders set",
     "male": "Male",
     "female": "Female",
     "other": "Other"
@@ -101,6 +147,10 @@
     "phone": "Phone",
     "email": "Email",
     "language": "Language",
+    "notifications": "Notifications",
+    "push_notifications": "Push Notifications",
+    "sms_notifications": "SMS Notifications",
+    "email_notifications": "Email Notifications",
     "app_version": "App Version",
     "logout": "Logout",
     "logout_confirm": "Are you sure you want to logout?"

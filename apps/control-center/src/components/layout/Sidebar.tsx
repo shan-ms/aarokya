@@ -13,6 +13,8 @@ import {
   Heart,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuthStore } from '@/store/authStore';
+import { canAccessRoute, getUserPermissions } from '@/lib/rbac';
 
 interface SidebarProps {
   open: boolean;
@@ -30,11 +32,15 @@ const navItems = [
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const user = useAuthStore((s) => s.user);
+  const permissions = getUserPermissions(user?.role);
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard';
     return pathname.startsWith(href);
   };
+
+  const visibleItems = navItems.filter((item) => canAccessRoute(permissions, item.href));
 
   return (
     <>
@@ -71,7 +77,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 
         {/* Nav items */}
         <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-          {navItems.map((item) => {
+          {visibleItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.href);
             return (
@@ -91,6 +97,9 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         {/* Footer */}
         <div className="border-t border-gray-200 p-4">
           <p className="text-xs text-gray-400">Aarokya Control Center v0.1.0</p>
+          {user?.role && (
+            <p className="mt-0.5 text-xs text-gray-400">Role: {user.role.name}</p>
+          )}
         </div>
       </aside>
     </>
