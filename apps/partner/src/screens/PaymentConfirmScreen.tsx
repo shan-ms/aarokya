@@ -6,6 +6,8 @@ import {
   SafeAreaView,
   ScrollView,
   Alert,
+  Modal,
+  TouchableOpacity,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { ContributionSourceType } from '../types';
@@ -48,6 +50,7 @@ const PaymentConfirmScreen: React.FC<PaymentConfirmScreenProps> = ({
   const { workers, fetchDashboard } = usePartnerStore();
 
   const [loading, setLoading] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const totalAmountPaise = workerIds.length * amountPerWorkerPaise;
 
@@ -56,7 +59,12 @@ const PaymentConfirmScreen: React.FC<PaymentConfirmScreenProps> = ({
     [workers, workerIds],
   );
 
-  const handlePay = async () => {
+  const handlePayPress = () => {
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmPay = async () => {
+    setShowConfirmModal(false);
     if (!partner?.id) return;
 
     setLoading(true);
@@ -159,12 +167,54 @@ const PaymentConfirmScreen: React.FC<PaymentConfirmScreenProps> = ({
       <View style={styles.footer}>
         <Button
           title={loading ? t('payment.processing') : t('payment.payViaUpi')}
-          onPress={handlePay}
+          onPress={handlePayPress}
           loading={loading}
           size="lg"
           style={styles.payButton}
         />
       </View>
+
+      <Modal
+        visible={showConfirmModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowConfirmModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{t('payment.confirmTitle')}</Text>
+            <Text style={styles.modalMessage}>
+              {t('payment.confirmMessage', {
+                amount: formatCurrency(totalAmountPaise),
+                count: workerIds.length,
+              })}
+            </Text>
+
+            <View style={styles.modalAmountContainer}>
+              <Text style={styles.modalAmount}>
+                {formatCurrency(totalAmountPaise)}
+              </Text>
+            </View>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.modalCancelButton}
+                onPress={() => setShowConfirmModal(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
+              </TouchableOpacity>
+              <View style={styles.modalActionGap} />
+              <Button
+                title={t('payment.confirmPay')}
+                onPress={handleConfirmPay}
+                size="md"
+                style={styles.modalConfirmButton}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -280,6 +330,66 @@ const styles = StyleSheet.create({
   },
   payButton: {
     width: '100%',
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xxl,
+  },
+  modalContent: {
+    width: '100%',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.xl,
+    padding: spacing.xxl,
+  },
+  modalTitle: {
+    ...typography.headlineLarge,
+    color: colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: spacing.md,
+  },
+  modalMessage: {
+    ...typography.bodyMedium,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: spacing.xxl,
+  },
+  modalAmountContainer: {
+    alignItems: 'center',
+    paddingVertical: spacing.lg,
+    marginBottom: spacing.xxl,
+    backgroundColor: colors.primaryLight,
+    borderRadius: borderRadius.lg,
+  },
+  modalAmount: {
+    ...typography.displaySmall,
+    color: colors.primary,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  modalCancelButton: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    borderRadius: borderRadius.lg,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+  },
+  modalCancelText: {
+    ...typography.button,
+    color: colors.textSecondary,
+  },
+  modalActionGap: {
+    width: spacing.md,
+  },
+  modalConfirmButton: {
+    flex: 1,
   },
 });
 

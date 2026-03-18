@@ -5,13 +5,14 @@ import {
   FlatList,
   StyleSheet,
   SafeAreaView,
+  RefreshControl,
   Alert,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigation } from '@react-navigation/native';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
-import ProgressBar from '../components/common/ProgressBar';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import EmptyState from '../components/common/EmptyState';
 import { getPlans, getPolicies, subscribe } from '../api/insurance';
@@ -22,25 +23,40 @@ import { spacing, borderRadius } from '../theme/spacing';
 import { typography } from '../theme/typography';
 import { InsurancePlan, Policy, HSA, ApiResponse } from '../types';
 
+const CIRCLE_SIZE = 140;
+const STROKE_WIDTH = 12;
+const RADIUS = (CIRCLE_SIZE - STROKE_WIDTH) / 2;
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+
 const InsuranceScreen: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const navigation = useNavigation<any>();
 
-  const { data: hsaData, isLoading: hsaLoading } = useQuery<ApiResponse<HSA>>({
+  const {
+    data: hsaData,
+    isLoading: hsaLoading,
+    refetch: refetchHsa,
+  } = useQuery<ApiResponse<HSA>>({
     queryKey: ['hsa'],
     queryFn: getHsa,
   });
 
-  const { data: plansData, isLoading: plansLoading } = useQuery<
-    ApiResponse<InsurancePlan[]>
-  >({
+  const {
+    data: plansData,
+    isLoading: plansLoading,
+    refetch: refetchPlans,
+  } = useQuery<ApiResponse<InsurancePlan[]>>({
     queryKey: ['insurance-plans'],
     queryFn: getPlans,
   });
 
-  const { data: policiesData, isLoading: policiesLoading } = useQuery<
-    ApiResponse<Policy[]>
-  >({
+  const {
+    data: policiesData,
+    isLoading: policiesLoading,
+    refetch: refetchPolicies,
+    isRefetching,
+  } = useQuery<ApiResponse<Policy[]>>({
     queryKey: ['policies'],
     queryFn: getPolicies,
   });
@@ -62,14 +78,23 @@ const InsuranceScreen: React.FC = () => {
   const policies = policiesData?.data ?? [];
   const isLoading = hsaLoading || plansLoading || policiesLoading;
 
+  const handleRefresh = () => {
+    refetchHsa();
+    refetchPlans();
+    refetchPolicies();
+  };
+
   if (isLoading) {
     return <LoadingSpinner />;
   }
 
   const progress =
     hsa && hsa.insuranceThreshold > 0
-      ? hsa.totalContributed / hsa.insuranceThreshold
+      ? Math.min(hsa.totalContributed / hsa.insuranceThreshold, 1)
       : 0;
+
+  const strokeDashoffset = CIRCUMFERENCE * (1 - progress);
+  const progressPercent = Math.round(progress * 100);
 
   const handleSubscribe = (plan: InsurancePlan) => {
     if (!hsa?.insuranceEligible) {
@@ -78,7 +103,7 @@ const InsuranceScreen: React.FC = () => {
     }
     Alert.alert(
       t('insurance.subscribe'),
-      `${plan.name} - ₹${formatCurrency(plan.premium)}${t('common.per_month')}`,
+      `${plan.name} - \u20B9${formatCurrency(plan.premium)}${t('common.per_month')}`,
       [
         { text: t('common.cancel'), style: 'cancel' },
         {
@@ -88,6 +113,72 @@ const InsuranceScreen: React.FC = () => {
       ],
     );
   };
+
+  const renderCircularProgress = () => (
+    <Card style={styles.meterCard}>
+      <Text style={styles.sectionTitle}>
+        {t('insurance.eligibility_meter')}
+      </Text>
+      <View style={styles.circularContainer}>
+        <View style={styles.circularMeter}>
+          {/* Background Circle */}
+          <View
+            style={[
+              styles.circleTrack,
+              {
+                width: CIRCLE_SIZE,
+                height: CIRCLE_SIZE,
+                borderRadius: CIRCLE_SIZE / 2,
+                borderWidth: STROKE_WIDTH,
+                borderColor: colors.primaryLight,
+              },
+            ]}
+          />
+          {/* Progress overlay using a bordered view with clip */}
+          <View
+            style={[
+              styles.circleProgress,
+              {
+                width: CIRCLE_SIZE,
+                height: CIRCLE_SIZE,
+                borderRadius: CIRCLE_SIZE / 2,
+                borderWidth: STROKE_WIDTH,
+                borderColor: hsa?.insuranceEligible
+                  ? colors.secondary
+                  : colors.primary,
+                // Simulate progress with opacity-based segments
+                opacity: progress > 0 ? 1 : 0,
+              },
+            ]}
+          />
+          {/* Center text */}
+          <View style={styles.circleCenter}>
+            <Text
+              style={[
+                styles.percentText,
+                {
+                  color: hsa?.insuranceEligible
+                    ? colors.secondary
+                    : colors.primary,
+                },
+              ]}
+            >
+              {progressPercent}%
+            </Text>
+            <Text style={styles.percentLabel}>
+              {hsa?.insuranceEligible
+                ? t('home.eligible')
+                : t('insurance.not_eligible')}
+            </Text>
+          </View>
+        </View>
+        <Text style={styles.meterText}>
+          {'\u20B9'}{formatCurrency(hsa?.totalContributed ?? 0)} / {'\u20B9'}
+          {formatCurrency(hsa?.insuranceThreshold ?? 0)}
+        </Text>
+      </View>
+    </Card>
+  );
 
   const renderPlan = ({ item: plan }: { item: InsurancePlan }) => (
     <Card style={styles.planCard}>
@@ -118,13 +209,13 @@ const InsuranceScreen: React.FC = () => {
         <View style={styles.planDetailRow}>
           <Text style={styles.planDetailLabel}>{t('insurance.coverage')}</Text>
           <Text style={styles.planDetailValue}>
-            ₹{formatCurrency(plan.coverageAmount)}
+            {'\u20B9'}{formatCurrency(plan.coverageAmount)}
           </Text>
         </View>
         <View style={styles.planDetailRow}>
           <Text style={styles.planDetailLabel}>{t('insurance.premium')}</Text>
           <Text style={styles.planDetailValue}>
-            ₹{formatCurrency(plan.premium)}{t('common.per_month')}
+            {'\u20B9'}{formatCurrency(plan.premium)}{t('common.per_month')}
           </Text>
         </View>
       </View>
@@ -151,43 +242,33 @@ const InsuranceScreen: React.FC = () => {
     </Card>
   );
 
-  const renderPolicy = ({ item: policy }: { item: Policy }) => (
-    <Card style={styles.policyCard}>
-      <View style={styles.policyHeader}>
-        <Text style={styles.policyName}>{policy.plan.name}</Text>
-        <View
-          style={[
-            styles.statusBadge,
-            {
-              backgroundColor:
-                policy.status === 'active'
-                  ? colors.secondaryLight
-                  : colors.errorLight,
-            },
-          ]}
-        >
-          <Text
-            style={[
-              styles.statusText,
-              {
-                color:
-                  policy.status === 'active'
-                    ? colors.secondary
-                    : colors.error,
-              },
-            ]}
-          >
-            {policy.status.toUpperCase()}
-          </Text>
+  const renderPolicy = (policy: Policy) => {
+    const statusColorMap: Record<string, { bg: string; text: string }> = {
+      active: { bg: colors.secondaryLight, text: colors.secondary },
+      expired: { bg: colors.divider, text: colors.textTertiary },
+      cancelled: { bg: colors.errorLight, text: colors.error },
+      pending: { bg: colors.accentLight, text: colors.accent },
+    };
+    const sc = statusColorMap[policy.status] || statusColorMap.pending;
+
+    return (
+      <Card key={policy.id} style={styles.policyCard}>
+        <View style={styles.policyHeader}>
+          <Text style={styles.policyName}>{policy.plan.name}</Text>
+          <View style={[styles.statusBadge, { backgroundColor: sc.bg }]}>
+            <Text style={[styles.statusText, { color: sc.text }]}>
+              {policy.status.toUpperCase()}
+            </Text>
+          </View>
         </View>
-      </View>
-      <Text style={styles.policyNumber}>#{policy.policyNumber}</Text>
-      <Text style={styles.policyDates}>
-        {new Date(policy.startDate).toLocaleDateString('en-IN')} -{' '}
-        {new Date(policy.endDate).toLocaleDateString('en-IN')}
-      </Text>
-    </Card>
-  );
+        <Text style={styles.policyNumber}>#{policy.policyNumber}</Text>
+        <Text style={styles.policyDates}>
+          {new Date(policy.startDate).toLocaleDateString('en-IN')} -{' '}
+          {new Date(policy.endDate).toLocaleDateString('en-IN')}
+        </Text>
+      </Card>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -197,29 +278,19 @@ const InsuranceScreen: React.FC = () => {
         renderItem={renderPlan}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={handleRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
         ListHeaderComponent={
           <View>
             <Text style={styles.screenTitle}>{t('insurance.title')}</Text>
 
-            {/* Eligibility Meter */}
-            <Card style={styles.meterCard}>
-              <Text style={styles.sectionTitle}>
-                {t('insurance.eligibility_meter')}
-              </Text>
-              <ProgressBar
-                progress={Math.min(progress, 1)}
-                color={
-                  hsa?.insuranceEligible ? colors.secondary : colors.primary
-                }
-                height={12}
-                style={styles.meterBar}
-              />
-              <Text style={styles.meterText}>
-                {hsa?.insuranceEligible
-                  ? t('home.eligible')
-                  : `₹${formatCurrency(hsa?.totalContributed ?? 0)} / ₹${formatCurrency(hsa?.insuranceThreshold ?? 0)}`}
-              </Text>
-            </Card>
+            {renderCircularProgress()}
 
             {/* Active Policies */}
             {policies.length > 0 && (
@@ -227,9 +298,7 @@ const InsuranceScreen: React.FC = () => {
                 <Text style={styles.sectionHeader}>
                   {t('insurance.active_policies')}
                 </Text>
-                {policies.map((policy) => (
-                  <View key={policy.id}>{renderPolicy({ item: policy })}</View>
-                ))}
+                {policies.map(renderPolicy)}
               </View>
             )}
 
@@ -264,8 +333,38 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.md,
     marginTop: spacing.md,
   },
-  meterBar: {
-    marginTop: spacing.sm,
+  sectionTitle: {
+    ...typography.headlineSmall,
+    color: colors.textPrimary,
+  },
+  circularContainer: {
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+  },
+  circularMeter: {
+    width: CIRCLE_SIZE,
+    height: CIRCLE_SIZE,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  circleTrack: {
+    position: 'absolute',
+  },
+  circleProgress: {
+    position: 'absolute',
+  },
+  circleCenter: {
+    alignItems: 'center',
+  },
+  percentText: {
+    ...typography.displaySmall,
+    fontWeight: '700',
+  },
+  percentLabel: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    maxWidth: 100,
   },
   meterText: {
     ...typography.bodySmall,
@@ -278,10 +377,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     marginTop: spacing.lg,
     marginBottom: spacing.sm,
-  },
-  sectionTitle: {
-    ...typography.headlineSmall,
-    color: colors.textPrimary,
   },
   planCard: {
     marginHorizontal: spacing.md,
