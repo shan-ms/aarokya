@@ -279,7 +279,7 @@ export default function UsersPage() {
                   >
                     {columns.map((col) => (
                       <td key={col.key} className="whitespace-nowrap px-4 py-3 text-gray-700">
-                        {col.render ? col.render(row as UserRow) : (row as Record<string, unknown>)[col.key] as React.ReactNode}
+                        {col.render ? col.render(row as UserRow) : ((row as unknown as Record<string, unknown>)[col.key] as React.ReactNode)}
                       </td>
                     ))}
                   </tr>

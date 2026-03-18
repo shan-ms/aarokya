@@ -25,23 +25,27 @@ export function middleware(request: NextRequest) {
       const payload = JSON.parse(atob(token.split('.')[1]));
       const expiry = payload.exp * 1000;
       if (Date.now() >= expiry) {
+        // Token expired - redirect to login
         const loginUrl = new URL('/login', request.url);
         loginUrl.searchParams.set('redirect', pathname);
         const response = NextResponse.redirect(loginUrl);
         response.cookies.delete('aarokya_cc_token');
         return response;
       }
+      // Token valid - allow through
+      return NextResponse.next();
     } catch {
       // Invalid token format, redirect to login
       const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
       const response = NextResponse.redirect(loginUrl);
       response.cookies.delete('aarokya_cc_token');
       return response;
     }
   }
 
-  // For client-side auth (localStorage), we allow through and let
-  // the dashboard layout handle redirect via useAuthStore.
+  // No cookie token - for client-side auth (localStorage), we allow through
+  // and let the dashboard layout handle redirect via useAuthStore.
   // The middleware protects against server-side access with expired cookies.
   return NextResponse.next();
 }

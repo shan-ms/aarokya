@@ -18,6 +18,16 @@ interface AuthState {
   initialize: () => void;
 }
 
+function setCookie(token: string) {
+  if (typeof document === 'undefined') return;
+  document.cookie = `aarokya_cc_token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+}
+
+function removeCookie() {
+  if (typeof document === 'undefined') return;
+  document.cookie = 'aarokya_cc_token=; path=/; max-age=0; SameSite=Lax';
+}
+
 export const useAuthStore = create<AuthState>((set) => ({
   token: null,
   user: null,
@@ -33,6 +43,10 @@ export const useAuthStore = create<AuthState>((set) => ({
       isAuthenticated: authenticated,
       isLoading: false,
     });
+    // Sync cookie with localStorage token
+    if (token && authenticated) {
+      setCookie(token);
+    }
   },
 
   login: async (phone: string, otp: string) => {
@@ -40,6 +54,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     const { access_token, user } = response.data;
 
     setToken(access_token);
+    setCookie(access_token);
     set({
       token: access_token,
       user,
@@ -50,6 +65,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: () => {
     removeToken();
+    removeCookie();
     set({
       token: null,
       user: null,
@@ -65,6 +81,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ user, role: user.role?.name || null });
     } catch {
       removeToken();
+      removeCookie();
       set({
         token: null,
         user: null,

@@ -24,25 +24,16 @@ const mockTransactions: (Transaction & { reconciliation_status?: string })[] = [
 ];
 
 const statusBadge: Record<TransactionStatus, 'success' | 'warning' | 'error' | 'neutral'> = {
-  completed: 'success',
-  pending: 'warning',
-  failed: 'error',
-  reversed: 'neutral',
+  completed: 'success', pending: 'warning', failed: 'error', reversed: 'neutral',
 };
 
-const reconBadge: Record<string, 'success' | 'warning' | 'error'> = {
-  reconciled: 'success',
-  pending: 'warning',
-  flagged: 'error',
+const reconciliationBadge: Record<string, 'success' | 'warning' | 'error'> = {
+  reconciled: 'success', pending: 'warning', flagged: 'error',
 };
 
 const typeLabel: Record<TransactionType, string> = {
-  contribution: 'Contribution',
-  withdrawal: 'Withdrawal',
-  premium_payment: 'Premium Payment',
-  claim_payout: 'Claim Payout',
-  refund: 'Refund',
-  fee: 'Fee',
+  contribution: 'Contribution', withdrawal: 'Withdrawal', premium_payment: 'Premium Payment',
+  claim_payout: 'Claim Payout', refund: 'Refund', fee: 'Fee',
 };
 
 type TxRow = Transaction & { reconciliation_status?: string } & Record<string, unknown>;
@@ -84,11 +75,11 @@ export default function FinancesPage() {
         const matchSearch = !search || t.description.toLowerCase().includes(search.toLowerCase()) || t.reference_id.toLowerCase().includes(search.toLowerCase());
         const matchType = !typeFilter || t.type === typeFilter;
         const matchStatus = !statusFilter || t.status === statusFilter;
-        const matchAmountMin = !amountMin || t.amount_paise >= parseInt(amountMin) * 100;
-        const matchAmountMax = !amountMax || t.amount_paise <= parseInt(amountMax) * 100;
         const matchDateFrom = !dateFrom || t.created_at >= dateFrom;
         const matchDateTo = !dateTo || t.created_at <= dateTo + 'T23:59:59Z';
-        return matchSearch && matchType && matchStatus && matchAmountMin && matchAmountMax && matchDateFrom && matchDateTo;
+        const matchAmountMin = !amountMin || t.amount_paise >= parseInt(amountMin) * 100;
+        const matchAmountMax = !amountMax || t.amount_paise <= parseInt(amountMax) * 100;
+        return matchSearch && matchType && matchStatus && matchDateFrom && matchDateTo && matchAmountMin && matchAmountMax;
       });
       setTransactions(filtered);
       setTotalPages(Math.max(1, Math.ceil(filtered.length / pageSize)));
@@ -144,7 +135,7 @@ export default function FinancesPage() {
       render: (row) => {
         const recon = (row as TxRow).reconciliation_status || 'pending';
         return (
-          <Badge variant={reconBadge[recon] || 'neutral'}>
+          <Badge variant={reconciliationBadge[recon] || 'neutral'}>
             {recon}
           </Badge>
         );
@@ -158,7 +149,7 @@ export default function FinancesPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
           icon={<Wallet className="h-5 w-5" />}
-          label="Total Volume (this period)"
+          label="Total Volume (filtered)"
           value={formatCurrencyCompact(totalVolume)}
         />
         <StatCard
@@ -174,22 +165,22 @@ export default function FinancesPage() {
       </div>
 
       {/* Filters */}
-      <div className="card space-y-4">
-        <h3 className="text-sm font-semibold text-gray-700">Filters</h3>
+      <div className="card">
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">Filters</h3>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              placeholder="Search description or ref..."
+              placeholder="Search description or reference..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               className="h-9 w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-200"
             />
           </div>
 
-          {/* Type dropdown */}
+          {/* Type */}
           <select
             value={typeFilter}
             onChange={(e) => { setTypeFilter(e.target.value as TransactionType | ''); setPage(1); }}
@@ -204,7 +195,7 @@ export default function FinancesPage() {
             <option value="fee">Fee</option>
           </select>
 
-          {/* Status dropdown */}
+          {/* Status */}
           <select
             value={statusFilter}
             onChange={(e) => { setStatusFilter(e.target.value as TransactionStatus | ''); setPage(1); }}
@@ -216,12 +207,13 @@ export default function FinancesPage() {
             <option value="failed">Failed</option>
             <option value="reversed">Reversed</option>
           </select>
-        </div>
 
-        {/* Date range and amount range */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Placeholder for alignment */}
+          <div />
+
+          {/* Date Range */}
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-500">Date From</label>
+            <label className="mb-1 block text-xs font-medium text-gray-500">From Date</label>
             <input
               type="date"
               value={dateFrom}
@@ -230,7 +222,7 @@ export default function FinancesPage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-500">Date To</label>
+            <label className="mb-1 block text-xs font-medium text-gray-500">To Date</label>
             <input
               type="date"
               value={dateTo}
@@ -238,8 +230,10 @@ export default function FinancesPage() {
               className="h-9 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-700 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-200"
             />
           </div>
+
+          {/* Amount Range */}
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-500">Min Amount (Rs)</label>
+            <label className="mb-1 block text-xs font-medium text-gray-500">Min Amount (Rs.)</label>
             <input
               type="number"
               placeholder="0"
@@ -249,10 +243,10 @@ export default function FinancesPage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-500">Max Amount (Rs)</label>
+            <label className="mb-1 block text-xs font-medium text-gray-500">Max Amount (Rs.)</label>
             <input
               type="number"
-              placeholder="999999"
+              placeholder="No limit"
               value={amountMax}
               onChange={(e) => { setAmountMax(e.target.value); setPage(1); }}
               className="h-9 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-700 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-200"
@@ -272,27 +266,29 @@ export default function FinancesPage() {
         loading={loading}
       />
 
-      {/* Totals Summary Row */}
+      {/* Totals Summary */}
       {transactions.length > 0 && (
-        <div className="card">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">Totals Summary</h3>
+        <div className="card bg-gray-50">
+          <h4 className="text-sm font-semibold text-gray-700 mb-2">Summary</h4>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             <div>
               <p className="text-xs text-gray-500">Total Transactions</p>
               <p className="text-lg font-bold text-gray-900">{transactions.length}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">Total Value</p>
+              <p className="text-xs text-gray-500">Total Amount</p>
               <p className="text-lg font-bold text-gray-900">{formatCurrency(totalVolume)}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Avg Transaction</p>
-              <p className="text-lg font-bold text-gray-900">{formatCurrency(transactions.length > 0 ? Math.round(totalVolume / transactions.length) : 0)}</p>
             </div>
             <div>
               <p className="text-xs text-gray-500">Reconciled</p>
               <p className="text-lg font-bold text-secondary">
-                {transactions.filter((t) => (t as Transaction & { reconciliation_status?: string }).reconciliation_status === 'reconciled').length} / {transactions.length}
+                {transactions.filter((t) => (t as TxRow).reconciliation_status === 'reconciled').length}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Flagged</p>
+              <p className="text-lg font-bold text-danger">
+                {transactions.filter((t) => (t as TxRow).reconciliation_status === 'flagged').length}
               </p>
             </div>
           </div>
