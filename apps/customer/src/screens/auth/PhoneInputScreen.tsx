@@ -21,6 +21,8 @@ type AuthStackParamList = {
   Welcome: undefined;
   PhoneInput: undefined;
   OTP: { phone: string };
+  ABHALink: undefined;
+  HealthProfileSetup: undefined;
 };
 
 type PhoneInputScreenNavigationProp = StackNavigationProp<

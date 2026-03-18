@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Switch,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Card from '../components/common/Card';
@@ -18,10 +19,10 @@ import { typography } from '../theme/typography';
 
 const languages = [
   { code: 'en', label: 'English' },
-  { code: 'hi', label: 'हिन्दी' },
-  { code: 'ta', label: 'தமிழ்' },
-  { code: 'te', label: 'తెలుగు' },
-  { code: 'kn', label: 'ಕನ್ನಡ' },
+  { code: 'hi', label: '\u0939\u093F\u0928\u094D\u0926\u0940' },
+  { code: 'ta', label: '\u0BA4\u0BAE\u0BBF\u0BB4\u0BCD' },
+  { code: 'te', label: '\u0C24\u0C46\u0C32\u0C41\u0C17\u0C41' },
+  { code: 'kn', label: '\u0C95\u0CA8\u0CCD\u0CA8\u0CA1' },
 ];
 
 const ProfileScreen: React.FC = () => {
@@ -29,8 +30,16 @@ const ProfileScreen: React.FC = () => {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
 
+  const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
+  const [pushNotifications, setPushNotifications] = useState(true);
+  const [smsNotifications, setSmsNotifications] = useState(true);
+  const [emailNotifications, setEmailNotifications] = useState(false);
+
+  const currentLanguage = languages.find((l) => l.code === i18n.language);
+
   const handleLanguageChange = (code: string) => {
     i18n.changeLanguage(code);
+    setShowLanguageDropdown(false);
   };
 
   const handleLogout = () => {
@@ -80,29 +89,96 @@ const ProfileScreen: React.FC = () => {
           </View>
         </Card>
 
-        {/* Language Selector */}
+        {/* Language Selector (Dropdown) */}
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>{t('profile.language')}</Text>
-          <View style={styles.languageGrid}>
-            {languages.map((lang) => (
-              <TouchableOpacity
-                key={lang.code}
-                style={[
-                  styles.languageButton,
-                  i18n.language === lang.code && styles.languageButtonActive,
-                ]}
-                onPress={() => handleLanguageChange(lang.code)}
-              >
-                <Text
+          <TouchableOpacity
+            style={styles.dropdownTrigger}
+            onPress={() => setShowLanguageDropdown(!showLanguageDropdown)}
+          >
+            <Text style={styles.dropdownValue}>
+              {currentLanguage?.label || 'English'}
+            </Text>
+            <Text style={styles.dropdownArrow}>
+              {showLanguageDropdown ? '\u25B2' : '\u25BC'}
+            </Text>
+          </TouchableOpacity>
+
+          {showLanguageDropdown && (
+            <View style={styles.dropdownMenu}>
+              {languages.map((lang) => (
+                <TouchableOpacity
+                  key={lang.code}
                   style={[
-                    styles.languageText,
-                    i18n.language === lang.code && styles.languageTextActive,
+                    styles.dropdownItem,
+                    i18n.language === lang.code && styles.dropdownItemActive,
                   ]}
+                  onPress={() => handleLanguageChange(lang.code)}
                 >
-                  {lang.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text
+                    style={[
+                      styles.dropdownItemText,
+                      i18n.language === lang.code &&
+                        styles.dropdownItemTextActive,
+                    ]}
+                  >
+                    {lang.label}
+                  </Text>
+                  {i18n.language === lang.code && (
+                    <Text style={styles.checkmark}>{'\u2713'}</Text>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </Card>
+
+        {/* Notification Preferences */}
+        <Card style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('profile.notifications')}</Text>
+
+          <View style={styles.notificationRow}>
+            <Text style={styles.notificationLabel}>
+              {t('profile.push_notifications')}
+            </Text>
+            <Switch
+              value={pushNotifications}
+              onValueChange={setPushNotifications}
+              trackColor={{ false: colors.border, true: colors.primaryLight }}
+              thumbColor={
+                pushNotifications ? colors.primary : colors.textTertiary
+              }
+            />
+          </View>
+          <View style={styles.divider} />
+
+          <View style={styles.notificationRow}>
+            <Text style={styles.notificationLabel}>
+              {t('profile.sms_notifications')}
+            </Text>
+            <Switch
+              value={smsNotifications}
+              onValueChange={setSmsNotifications}
+              trackColor={{ false: colors.border, true: colors.primaryLight }}
+              thumbColor={
+                smsNotifications ? colors.primary : colors.textTertiary
+              }
+            />
+          </View>
+          <View style={styles.divider} />
+
+          <View style={styles.notificationRow}>
+            <Text style={styles.notificationLabel}>
+              {t('profile.email_notifications')}
+            </Text>
+            <Switch
+              value={emailNotifications}
+              onValueChange={setEmailNotifications}
+              trackColor={{ false: colors.border, true: colors.primaryLight }}
+              thumbColor={
+                emailNotifications ? colors.primary : colors.textTertiary
+              }
+            />
           </View>
         </Card>
 
@@ -186,30 +262,69 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: colors.divider,
   },
-  languageGrid: {
+  // Dropdown
+  dropdownTrigger: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  languageButton: {
-    paddingVertical: spacing.sm,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.sm + 2,
     paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.md,
     borderWidth: 1.5,
     borderColor: colors.border,
+    borderRadius: borderRadius.lg,
     backgroundColor: colors.surface,
   },
-  languageButtonActive: {
-    borderColor: colors.primary,
+  dropdownValue: {
+    ...typography.bodyLarge,
+    color: colors.textPrimary,
+  },
+  dropdownArrow: {
+    fontSize: 10,
+    color: colors.textTertiary,
+  },
+  dropdownMenu: {
+    marginTop: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.surface,
+    overflow: 'hidden',
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.divider,
+  },
+  dropdownItemActive: {
     backgroundColor: colors.primaryLight,
   },
-  languageText: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-    fontWeight: '500',
+  dropdownItemText: {
+    ...typography.bodyMedium,
+    color: colors.textPrimary,
   },
-  languageTextActive: {
+  dropdownItemTextActive: {
     color: colors.primary,
+    fontWeight: '600',
+  },
+  checkmark: {
+    color: colors.primary,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  // Notifications
+  notificationRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+  },
+  notificationLabel: {
+    ...typography.bodyMedium,
+    color: colors.textPrimary,
   },
   logoutButton: {
     marginHorizontal: spacing.md,

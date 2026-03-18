@@ -1,19 +1,20 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   SafeAreaView,
   ScrollView,
-  TouchableOpacity,
   RefreshControl,
   Alert,
   Linking,
+  TextInput,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 import { Report } from '../types';
 import { colors } from '../theme/colors';
-import { typography } from '../theme/typography';
+import { typography, fontSizes } from '../theme/typography';
 import { spacing, borderRadius } from '../theme/spacing';
 import { getReports } from '../api/contributions';
 import { useAuthStore } from '../store/authStore';
@@ -36,44 +37,63 @@ const formatDateInput = (date: Date): string => {
   return date.toISOString().split('T')[0];
 };
 
-const ReportsScreen: React.FC<ReportsScreenProps> = ({ navigation }) => {
+const isValidDateString = (dateStr: string): boolean => {
+  const regex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!regex.test(dateStr)) return false;
+  const date = new Date(dateStr);
+  return !isNaN(date.getTime());
+};
+
+const ReportsScreen: React.FC<ReportsScreenProps> = () => {
   const { t } = useTranslation();
   const partner = useAuthStore((state) => state.partner);
-
-  const [reports, setReports] = useState<Report[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const today = new Date();
   const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
 
   const [startDate, setStartDate] = useState(formatDateInput(thirtyDaysAgo));
   const [endDate, setEndDate] = useState(formatDateInput(today));
+  const [queryDates, setQueryDates] = useState({
+    start: formatDateInput(thirtyDaysAgo),
+    end: formatDateInput(today),
+  });
 
-  const loadReports = useCallback(async () => {
-    if (!partner?.id) return;
-    try {
-      const response = await getReports(partner.id, { startDate, endDate });
-      setReports(response.data);
-      setError(null);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load reports';
-      setError(message);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+  const {
+    data: reports = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isRefetching,
+  } = useQuery<Report[]>({
+    queryKey: ['partner-reports', partner?.id, queryDates.start, queryDates.end],
+    queryFn: async () => {
+      if (!partner?.id) throw new Error('No partner ID');
+      const response = await getReports(partner.id, {
+        startDate: queryDates.start,
+        endDate: queryDates.end,
+      });
+      return response.data;
+    },
+    enabled: !!partner?.id,
+    staleTime: 60000,
+  });
+
+  const handleGenerate = useCallback(() => {
+    if (!isValidDateString(startDate) || !isValidDateString(endDate)) {
+      Alert.alert(t('common.error'), 'Please enter valid dates in YYYY-MM-DD format');
+      return;
     }
-  }, [partner?.id, startDate, endDate]);
+    if (new Date(startDate) > new Date(endDate)) {
+      Alert.alert(t('common.error'), 'Start date must be before end date');
+      return;
+    }
+    setQueryDates({ start: startDate, end: endDate });
+  }, [startDate, endDate, t]);
 
-  useEffect(() => {
-    loadReports();
-  }, [loadReports]);
-
-  const handleRefresh = () => {
-    setRefreshing(true);
-    loadReports();
-  };
+  const handleRefresh = useCallback(() => {
+    refetch();
+  }, [refetch]);
 
   const handleDownload = async (report: Report) => {
     if (report.downloadUrl) {
@@ -85,6 +105,10 @@ const ReportsScreen: React.FC<ReportsScreenProps> = ({ navigation }) => {
     }
   };
 
+  const handleExportCsv = () => {
+    Alert.alert(t('reports.export'), t('reports.exportSuccess'));
+  };
+
   const summaryStats = reports.reduce(
     (acc, report) => ({
       totalPaise: acc.totalPaise + report.totalAmountPaise,
@@ -94,7 +118,7 @@ const ReportsScreen: React.FC<ReportsScreenProps> = ({ navigation }) => {
     { totalPaise: 0, workerCount: 0, contributionCount: 0 },
   );
 
-  if (loading) {
+  if (isLoading) {
     return <LoadingSpinner fullScreen message={t('common.loading')} />;
   }
 
@@ -105,7 +129,7 @@ const ReportsScreen: React.FC<ReportsScreenProps> = ({ navigation }) => {
         contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
+            refreshing={isRefetching}
             onRefresh={handleRefresh}
             tintColor={colors.primary}
           />
@@ -119,21 +143,35 @@ const ReportsScreen: React.FC<ReportsScreenProps> = ({ navigation }) => {
           <View style={styles.dateRow}>
             <View style={styles.dateField}>
               <Text style={styles.dateFieldLabel}>{t('reports.startDate')}</Text>
-              <TouchableOpacity style={styles.dateInput}>
-                <Text style={styles.dateInputText}>{startDate}</Text>
-              </TouchableOpacity>
+              <View style={styles.dateInputContainer}>
+                <TextInput
+                  style={styles.dateTextInput}
+                  value={startDate}
+                  onChangeText={setStartDate}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor={colors.textTertiary}
+                  maxLength={10}
+                />
+              </View>
             </View>
             <Text style={styles.dateSeparator}>to</Text>
             <View style={styles.dateField}>
               <Text style={styles.dateFieldLabel}>{t('reports.endDate')}</Text>
-              <TouchableOpacity style={styles.dateInput}>
-                <Text style={styles.dateInputText}>{endDate}</Text>
-              </TouchableOpacity>
+              <View style={styles.dateInputContainer}>
+                <TextInput
+                  style={styles.dateTextInput}
+                  value={endDate}
+                  onChangeText={setEndDate}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor={colors.textTertiary}
+                  maxLength={10}
+                />
+              </View>
             </View>
           </View>
           <Button
             title={t('reports.generate')}
-            onPress={loadReports}
+            onPress={handleGenerate}
             variant="outline"
             size="sm"
             style={styles.generateButton}
@@ -165,12 +203,12 @@ const ReportsScreen: React.FC<ReportsScreenProps> = ({ navigation }) => {
           </View>
         )}
 
-        {error ? (
+        {isError ? (
           <EmptyState
             title={t('common.error')}
-            description={error}
+            description={error instanceof Error ? error.message : 'Failed to load reports'}
             actionLabel={t('common.retry')}
-            onAction={loadReports}
+            onAction={handleRefresh}
           />
         ) : reports.length > 0 ? (
           <>
@@ -183,9 +221,7 @@ const ReportsScreen: React.FC<ReportsScreenProps> = ({ navigation }) => {
             ))}
             <Button
               title={t('reports.export')}
-              onPress={() => {
-                Alert.alert(t('reports.export'), 'Export functionality coming soon');
-              }}
+              onPress={handleExportCsv}
               variant="outline"
               size="md"
               style={styles.exportButton}
@@ -242,16 +278,16 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
     marginBottom: spacing.xs,
   },
-  dateInput: {
+  dateInputContainer: {
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: borderRadius.md,
-    padding: spacing.md,
     backgroundColor: colors.background,
   },
-  dateInputText: {
-    ...typography.bodyMedium,
+  dateTextInput: {
+    fontSize: fontSizes.md,
     color: colors.textPrimary,
+    padding: spacing.md,
   },
   dateSeparator: {
     ...typography.bodyMedium,

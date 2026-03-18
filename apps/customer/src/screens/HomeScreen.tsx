@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   RefreshControl,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
@@ -17,6 +18,7 @@ import QuickActions from '../components/home/QuickActions';
 import ContributionItem from '../components/home/ContributionItem';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import EmptyState from '../components/common/EmptyState';
+import Button from '../components/common/Button';
 import { getDashboard } from '../api/hsa';
 import { useAuthStore } from '../store/authStore';
 import { colors } from '../theme/colors';
@@ -60,6 +62,24 @@ const HomeScreen: React.FC = () => {
 
   if (isLoading) {
     return <LoadingSpinner />;
+  }
+
+  if (isError) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <EmptyState
+          title={t('common.error')}
+          subtitle={t('common.error')}
+          action={
+            <Button
+              title={t('common.retry')}
+              onPress={() => refetch()}
+              variant="primary"
+            />
+          }
+        />
+      </SafeAreaView>
+    );
   }
 
   const renderHeader = () => (

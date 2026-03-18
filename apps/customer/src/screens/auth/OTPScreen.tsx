@@ -18,10 +18,12 @@ import { colors } from '../../theme/colors';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { typography, fontSizes } from '../../theme/typography';
 
-type AuthStackParamList = {
+export type AuthStackParamList = {
   Welcome: undefined;
   PhoneInput: undefined;
   OTP: { phone: string };
+  ABHALink: undefined;
+  HealthProfileSetup: undefined;
 };
 
 type OTPScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'OTP'>;
@@ -72,6 +74,10 @@ const OTPScreen: React.FC<OTPScreenProps> = ({ navigation, route }) => {
       const response = await verifyOtp(phone, otp);
       const { token, refreshToken, user } = response.data;
       login(token, refreshToken, user);
+      // After login, the AppNavigator will check isAuthenticated.
+      // If it's a new user (no abhaId), navigate to ABHA link.
+      // For now, we navigate to ABHALink as part of onboarding.
+      navigation.navigate('ABHALink');
     } catch (err: any) {
       const message =
         err?.response?.data?.message || t('common.error');

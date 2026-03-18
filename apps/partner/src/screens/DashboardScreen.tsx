@@ -25,6 +25,9 @@ import Card from '../components/common/Card';
 interface DashboardScreenProps {
   navigation: {
     navigate: (screen: string, params?: Record<string, unknown>) => void;
+    getParent: () => {
+      navigate: (screen: string, params?: Record<string, unknown>) => void;
+    } | undefined;
   };
 }
 
@@ -229,7 +232,12 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
             </View>
             <TouchableOpacity
               style={styles.profileButton}
-              onPress={() => navigation.navigate('Profile')}
+              onPress={() => {
+                const parent = navigation.getParent();
+                if (parent) {
+                  parent.navigate('Profile');
+                }
+              }}
               activeOpacity={0.7}
             >
               <Text style={styles.profileButtonText}>

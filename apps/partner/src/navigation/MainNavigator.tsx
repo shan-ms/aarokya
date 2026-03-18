@@ -79,22 +79,22 @@ const DashboardStackNavigator: React.FC = () => (
   <DashboardStack.Navigator screenOptions={screenOptions}>
     <DashboardStack.Screen
       name="DashboardHome"
-      component={DashboardScreen}
+      component={DashboardScreen as React.ComponentType}
       options={{ headerShown: false }}
     />
     <DashboardStack.Screen
       name="AddWorker"
-      component={AddWorkerScreen}
+      component={AddWorkerScreen as React.ComponentType}
       options={{ title: 'Add Worker' }}
     />
     <DashboardStack.Screen
       name="Contribute"
-      component={ContributeScreen}
+      component={ContributeScreen as React.ComponentType}
       options={{ title: 'Contribute' }}
     />
     <DashboardStack.Screen
       name="PaymentConfirm"
-      component={PaymentConfirmScreen}
+      component={PaymentConfirmScreen as React.ComponentType}
       options={{ title: 'Confirm Payment' }}
     />
   </DashboardStack.Navigator>
@@ -104,27 +104,27 @@ const WorkersStackNavigator: React.FC = () => (
   <WorkersStack.Navigator screenOptions={screenOptions}>
     <WorkersStack.Screen
       name="WorkersList"
-      component={WorkersScreen}
+      component={WorkersScreen as React.ComponentType}
       options={{ headerShown: false }}
     />
     <WorkersStack.Screen
       name="AddWorker"
-      component={AddWorkerScreen}
+      component={AddWorkerScreen as React.ComponentType}
       options={{ title: 'Add Worker' }}
     />
     <WorkersStack.Screen
       name="WorkerDetail"
-      component={WorkerDetailScreen}
+      component={WorkerDetailScreen as React.ComponentType}
       options={{ title: 'Worker Details' }}
     />
     <WorkersStack.Screen
       name="Contribute"
-      component={ContributeScreen}
+      component={ContributeScreen as React.ComponentType}
       options={{ title: 'Contribute' }}
     />
     <WorkersStack.Screen
       name="PaymentConfirm"
-      component={PaymentConfirmScreen}
+      component={PaymentConfirmScreen as React.ComponentType}
       options={{ title: 'Confirm Payment' }}
     />
   </WorkersStack.Navigator>
@@ -134,12 +134,12 @@ const ContributeStackNavigator: React.FC = () => (
   <ContributeStack.Navigator screenOptions={screenOptions}>
     <ContributeStack.Screen
       name="ContributeHome"
-      component={ContributeScreen}
+      component={ContributeScreen as React.ComponentType}
       options={{ headerShown: false }}
     />
     <ContributeStack.Screen
       name="PaymentConfirm"
-      component={PaymentConfirmScreen}
+      component={PaymentConfirmScreen as React.ComponentType}
       options={{ title: 'Confirm Payment' }}
     />
   </ContributeStack.Navigator>
@@ -206,7 +206,7 @@ const MainNavigator: React.FC = () => {
       />
       <Tab.Screen
         name="ReportsTab"
-        component={ReportsScreen}
+        component={ReportsScreen as React.ComponentType}
         options={{
           tabBarLabel: 'Reports',
           tabBarIcon: ({ focused }) => <TabIcon label="R" focused={focused} />,

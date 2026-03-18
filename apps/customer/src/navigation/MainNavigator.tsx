@@ -6,6 +6,7 @@ import HomeScreen from '../screens/HomeScreen';
 import HSADetailScreen from '../screens/HSADetailScreen';
 import ContributeScreen from '../screens/ContributeScreen';
 import InsuranceScreen from '../screens/InsuranceScreen';
+import ClaimsScreen from '../screens/ClaimsScreen';
 import HealthProfileScreen from '../screens/HealthProfileScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import { colors } from '../theme/colors';
@@ -19,15 +20,15 @@ export type HomeStackParamList = {
 
 const HomeStack = createStackNavigator<HomeStackParamList>();
 
+const stackHeaderOptions = {
+  headerShadowVisible: false,
+  headerStyle: { backgroundColor: colors.background },
+  headerTintColor: colors.textPrimary,
+  headerBackTitleVisible: false,
+};
+
 const HomeStackNavigator: React.FC = () => (
-  <HomeStack.Navigator
-    screenOptions={{
-      headerShadowVisible: false,
-      headerStyle: { backgroundColor: colors.background },
-      headerTintColor: colors.textPrimary,
-      headerBackTitleVisible: false,
-    }}
-  >
+  <HomeStack.Navigator screenOptions={stackHeaderOptions}>
     <HomeStack.Screen
       name="HomeMain"
       component={HomeScreen}
@@ -44,6 +45,28 @@ const HomeStackNavigator: React.FC = () => (
       options={{ headerTitle: '' }}
     />
   </HomeStack.Navigator>
+);
+
+export type InsuranceStackParamList = {
+  InsuranceMain: undefined;
+  Claims: undefined;
+};
+
+const InsuranceStack = createStackNavigator<InsuranceStackParamList>();
+
+const InsuranceStackNavigator: React.FC = () => (
+  <InsuranceStack.Navigator screenOptions={stackHeaderOptions}>
+    <InsuranceStack.Screen
+      name="InsuranceMain"
+      component={InsuranceScreen}
+      options={{ headerShown: false }}
+    />
+    <InsuranceStack.Screen
+      name="Claims"
+      component={ClaimsScreen}
+      options={{ headerTitle: '' }}
+    />
+  </InsuranceStack.Navigator>
 );
 
 export type MainTabParamList = {
@@ -89,7 +112,7 @@ const MainNavigator: React.FC = () => {
       />
       <Tab.Screen
         name="InsuranceTab"
-        component={InsuranceScreen}
+        component={InsuranceStackNavigator}
         options={{
           tabBarLabel: 'Insurance',
           tabBarIcon: ({ color }) => <TabIcon label="I" color={color} />,

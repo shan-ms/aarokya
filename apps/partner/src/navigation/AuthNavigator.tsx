@@ -54,37 +54,37 @@ const AuthNavigator: React.FC = () => {
     >
       <Stack.Screen
         name="Welcome"
-        component={WelcomeScreen}
+        component={WelcomeScreen as React.ComponentType}
         options={{ headerShown: false }}
       />
       <Stack.Screen
         name="PhoneInput"
-        component={PhoneInputScreen}
+        component={PhoneInputScreen as React.ComponentType}
         options={{ title: '' }}
       />
       <Stack.Screen
         name="OTP"
-        component={OTPScreen}
+        component={OTPScreen as React.ComponentType}
         options={{ title: '' }}
       />
       <Stack.Screen
         name="BusinessType"
-        component={BusinessTypeScreen}
+        component={BusinessTypeScreen as React.ComponentType}
         options={{ title: 'Organization Type', headerLeft: () => null }}
       />
       <Stack.Screen
         name="BusinessDetails"
-        component={BusinessDetailsScreen}
+        component={BusinessDetailsScreen as React.ComponentType}
         options={{ title: 'Business Details' }}
       />
       <Stack.Screen
         name="Verification"
-        component={VerificationScreen}
+        component={VerificationScreen as React.ComponentType}
         options={{ title: 'Verification' }}
       />
       <Stack.Screen
         name="ContributionScheme"
-        component={ContributionSchemeScreen}
+        component={ContributionSchemeScreen as React.ComponentType}
         options={{ title: 'Contribution Scheme' }}
       />
     </Stack.Navigator>
