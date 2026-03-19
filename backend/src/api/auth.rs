@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::sync::RwLock;
 use uuid::Uuid;
 
-use crate::config::AppConfig;
+use crate::config::{AppConfig, DEV_OTP_CODE};
 use crate::infrastructure::auth::{decode_token, encode_refresh_token, encode_token};
 use crate::infrastructure::error::AppError;
 
@@ -98,6 +98,7 @@ pub struct RefreshResponse {
 
 pub async fn send_otp(
     body: web::Json<SendOtpRequest>,
+    config: web::Data<AppConfig>,
     otp_store: web::Data<OtpStore>,
     rate_limit_store: web::Data<RateLimitStore>,
 ) -> Result<HttpResponse, AppError> {
@@ -106,14 +107,21 @@ pub async fn send_otp(
         return Err(AppError::Validation("Invalid phone number".to_string()));
     }
 
-    // ── Rate limiting ────────────────────────────────────────────────────
-    {
+    // ── Dev whitelist: fixed OTP, no rate limit ───────────────────────────
+    let (otp, skip_rate_limit) = if config.is_dev_otp_phone(&phone) {
+        tracing::info!("Dev OTP: using fixed code for whitelisted phone {}", phone);
+        (DEV_OTP_CODE.to_string(), true)
+    } else {
+        (format!("{:06}", rand::random::<u32>() % 1_000_000), false)
+    };
+
+    // ── Rate limiting (skip for dev whitelist) ─────────────────────────────
+    if !skip_rate_limit {
         let now = chrono::Utc::now();
         let mut rl = rate_limit_store
             .write()
             .map_err(|_| AppError::Internal("Rate limit store lock failed".to_string()))?;
         let entry = rl.entry(phone.clone()).or_default();
-        // Remove timestamps outside the window
         entry
             .timestamps
             .retain(|ts| now.signed_duration_since(*ts).num_seconds() < RATE_LIMIT_WINDOW_SECS);
@@ -124,9 +132,6 @@ pub async fn send_otp(
         }
         entry.timestamps.push(now);
     }
-
-    // ── Generate & store OTP ─────────────────────────────────────────────
-    let otp = format!("{:06}", rand::random::<u32>() % 1_000_000);
 
     {
         let mut store = otp_store
@@ -152,8 +157,13 @@ pub async fn verify_otp(
     let phone = body.phone.trim().to_string();
     let otp = body.otp.trim().to_string();
 
-    // ── Verify OTP ───────────────────────────────────────────────────────
-    {
+    tracing::debug!("verify_otp: phone={:?} otp={:?} is_dev={}", phone, otp, config.is_dev_otp_phone(&phone));
+
+    // ── Dev whitelist: accept fixed OTP without store lookup ──────────────
+    let dev_bypass = config.is_dev_otp_phone(&phone) && otp == DEV_OTP_CODE;
+
+    if !dev_bypass {
+        // ── Verify OTP from store ────────────────────────────────────────
         let mut store = otp_store
             .write()
             .map_err(|_| AppError::Internal("OTP store lock failed".to_string()))?;
@@ -188,7 +198,30 @@ pub async fn verify_otp(
     .await?;
 
     let (user_id, is_new_user, final_user_type) = match existing_user {
-        Some(user) => (user.id, false, user.user_type),
+        Some(user) => {
+            // Dev: allow switching role when using same phone from different apps
+            let effective_type = if config.is_dev_otp_phone(&phone) {
+                if user_type == "customer" && user.user_type.starts_with("operator_") {
+                    sqlx::query("UPDATE users SET user_type = 'customer', updated_at = NOW() WHERE id = $1")
+                        .bind(user.id)
+                        .execute(pool.get_ref())
+                        .await?;
+                    "customer".to_string()
+                } else if user_type.starts_with("operator_") && user.user_type == "customer" {
+                    sqlx::query("UPDATE users SET user_type = $1, updated_at = NOW() WHERE id = $2")
+                        .bind(&user_type)
+                        .bind(user.id)
+                        .execute(pool.get_ref())
+                        .await?;
+                    user_type
+                } else {
+                    user.user_type
+                }
+            } else {
+                user.user_type
+            };
+            (user.id, false, effective_type)
+        }
         None => {
             let id = Uuid::new_v4();
             sqlx::query(

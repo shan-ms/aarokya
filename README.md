@@ -46,18 +46,20 @@ aarokya/
 
 ## Quick Start
 
+See **[LAUNCH_LOCAL.md](./LAUNCH_LOCAL.md)** for full instructions.
+
 ```bash
-# 1. Start infrastructure
-cd backend && docker-compose up -d
+# 1. Start infrastructure (requires Docker)
+cd backend && docker compose up -d
 
 # 2. Run backend
 cp .env.example .env && cargo run
 
-# 3. Run customer app
-cd apps/customer && npm install && npx react-native start
-
-# 4. Run control center
+# 3. Run control center (web dashboard)
 cd apps/control-center && npm install && npm run dev
+
+# 4. Run customer app (React Native)
+cd apps/customer && npm install && npx react-native start
 ```
 
 See [Development Guide](docs/guides/DEVELOPMENT_GUIDE.md) for detailed setup.

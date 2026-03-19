@@ -56,10 +56,13 @@ function LoginContent() {
     setLoading(true);
 
     try {
-      await requestOtp(`+91${phone}`);
+      const res = await requestOtp(`+91${phone}`);
       setStep('otp');
       setCooldown(30);
-      toast('success', 'OTP Sent', `A verification code has been sent to +91 ${phone}`);
+      const msg = res.otp_hint
+        ? `Use OTP: ${res.otp_hint} (dev hint)`
+        : `A verification code has been sent to +91 ${phone}`;
+      toast('success', 'OTP Sent', msg);
     } catch {
       setError('Failed to send OTP. Please check your phone number.');
       toast('error', 'OTP Failed', 'Could not send OTP. Please try again.');
@@ -72,9 +75,10 @@ function LoginContent() {
     if (cooldown > 0) return;
     setLoading(true);
     try {
-      await requestOtp(`+91${phone}`);
+      const res = await requestOtp(`+91${phone}`);
       setCooldown(30);
-      toast('info', 'OTP Resent', 'A new verification code has been sent.');
+      const msg = res.otp_hint ? `Use OTP: ${res.otp_hint} (dev hint)` : 'A new verification code has been sent.';
+      toast('info', 'OTP Resent', msg);
     } catch {
       toast('error', 'Resend Failed', 'Could not resend OTP.');
     } finally {

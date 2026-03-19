@@ -34,6 +34,7 @@ const HomeScreen: React.FC = () => {
     data: dashboardData,
     isLoading,
     isError,
+    error,
     refetch,
     isRefetching,
   } = useQuery<{ data: Dashboard }>({
@@ -42,6 +43,7 @@ const HomeScreen: React.FC = () => {
   });
 
   const dashboard = dashboardData?.data;
+  const isNoHsa = isError && (error as any)?.response?.status === 404;
 
   const handleQuickAction = (key: string) => {
     switch (key) {
@@ -64,12 +66,16 @@ const HomeScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.container}>
         <EmptyState
-          title={t('common.error')}
-          subtitle={t('common.error')}
+          title={isNoHsa ? t('home.setup_hsa_title') : t('common.error')}
+          subtitle={isNoHsa ? t('home.setup_hsa_subtitle') : t('common.error')}
           action={
             <Button
-              title={t('common.retry')}
-              onPress={() => refetch()}
+              title={isNoHsa ? t('home.setup_hsa_button') : t('common.retry')}
+              onPress={() =>
+                isNoHsa
+                  ? navigation.navigate('LinkABHA')
+                  : refetch()
+              }
               variant="primary"
             />
           }
@@ -83,7 +89,7 @@ const HomeScreen: React.FC = () => {
       {/* Greeting */}
       <View style={styles.greeting}>
         <Text style={styles.greetingText}>
-          {t('home.greeting', { name: user?.name || '' })}
+          {t('home.greeting', { name: user?.name || t('home.guest') })}
         </Text>
       </View>
 

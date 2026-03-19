@@ -1,7 +1,14 @@
+import { Platform } from 'react-native';
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 
-const API_BASE_URL = process.env.API_BASE_URL || 'https://api.aarokya.in/v1';
+// Android emulator: use 10.0.2.2 to reach host localhost. Override with API_BASE_URL env if set.
+const getApiBaseUrl = () => {
+  if (process.env.API_BASE_URL) return process.env.API_BASE_URL;
+  if (__DEV__ && Platform.OS === 'android') return 'http://10.0.2.2:8080/api/v1';
+  return 'https://api.aarokya.in/v1';
+};
+const API_BASE_URL = getApiBaseUrl();
 
 const client = axios.create({
   baseURL: API_BASE_URL,

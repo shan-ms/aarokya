@@ -37,6 +37,18 @@
   },
   "home": {
     "greeting": "Hello, {{name}}!",
+    "guest": "there",
+    "hero_title": "Are you okay?",
+    "hero_subtitle": "Quick health check-in to track how you're feeling",
+    "start_checkin": "Start Check-in",
+    "talk_clinician": "Talk to Clinician",
+    "my_records": "My Records",
+    "my_savings": "My Savings",
+    "trust_statement": "Your data is secure and private.",
+    "privacy_link": "Privacy Policy",
+    "setup_hsa_title": "Set Up Your Account",
+    "setup_hsa_subtitle": "Link your ABHA ID to create your Health Savings Account and start saving.",
+    "setup_hsa_button": "Link ABHA",
     "hsa_balance": "HSA Balance",
     "add_money": "Add Money",
     "insurance_progress": "Insurance Eligibility",
@@ -154,6 +166,13 @@
     "app_version": "App Version",
     "logout": "Logout",
     "logout_confirm": "Are you sure you want to logout?"
+  },
+  "tabs": {
+    "home": "Home",
+    "insurance": "Insurance",
+    "records": "Records",
+    "health": "Health",
+    "profile": "Profile"
   },
   "common": {
     "loading": "Loading...",

@@ -14,8 +14,9 @@ import type {
 } from '@/types';
 
 // ─── Auth ────────────────────────────────────────────────────────────
-export async function requestOtp(phone: string): Promise<void> {
-  await api.post('/auth/request-otp', { phone });
+export async function requestOtp(phone: string): Promise<{ otp_hint?: string }> {
+  const res = await api.post('/auth/send-otp', { phone });
+  return res.data;
 }
 
 export async function verifyOtp(phone: string, otp: string): Promise<{ access_token: string; user: AdminUser }> {

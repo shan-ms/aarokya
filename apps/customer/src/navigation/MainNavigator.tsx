@@ -2,7 +2,9 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Text, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import HomeScreen from '../screens/HomeScreen';
+import LinkABHAScreen from '../screens/LinkABHAScreen';
 import HSADetailScreen from '../screens/HSADetailScreen';
 import ContributeScreen from '../screens/ContributeScreen';
 import CheckInScreen from '../screens/CheckInScreen';
@@ -18,6 +20,7 @@ import { typography } from '../theme/typography';
 
 export type HomeStackParamList = {
   HomeMain: undefined;
+  LinkABHA: undefined;
   HSADetail: undefined;
   Contribute: undefined;
   CheckIn: undefined;
@@ -41,6 +44,11 @@ const HomeStackNavigator: React.FC = () => (
       name="HomeMain"
       component={HomeScreen}
       options={{ headerShown: false }}
+    />
+    <HomeStack.Screen
+      name="LinkABHA"
+      component={LinkABHAScreen}
+      options={{ headerTitle: 'Link ABHA' }}
     />
     <HomeStack.Screen
       name="HSADetail"
@@ -113,6 +121,7 @@ const TabIcon: React.FC<{ label: string; color: string }> = ({
 }) => <Text style={[styles.tabIcon, { color }]}>{label}</Text>;
 
 const MainNavigator: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <Tab.Navigator
       screenOptions={{
@@ -135,7 +144,7 @@ const MainNavigator: React.FC = () => {
         name="HomeTab"
         component={HomeStackNavigator}
         options={{
-          tabBarLabel: 'Home',
+          tabBarLabel: t('tabs.home'),
           tabBarIcon: ({ color }) => <TabIcon label="H" color={color} />,
         }}
       />
@@ -143,7 +152,7 @@ const MainNavigator: React.FC = () => {
         name="InsuranceTab"
         component={InsuranceStackNavigator}
         options={{
-          tabBarLabel: 'Insurance',
+          tabBarLabel: t('tabs.insurance'),
           tabBarIcon: ({ color }) => <TabIcon label="I" color={color} />,
         }}
       />
@@ -151,7 +160,7 @@ const MainNavigator: React.FC = () => {
         name="RecordsTab"
         component={RecordsVaultScreen}
         options={{
-          tabBarLabel: 'Records',
+          tabBarLabel: t('tabs.records'),
           tabBarIcon: ({ color }) => <TabIcon label="R" color={color} />,
         }}
       />
@@ -159,7 +168,7 @@ const MainNavigator: React.FC = () => {
         name="HealthTab"
         component={HealthProfileScreen}
         options={{
-          tabBarLabel: 'Health',
+          tabBarLabel: t('tabs.health'),
           tabBarIcon: ({ color }) => <TabIcon label="+" color={color} />,
         }}
       />
@@ -167,7 +176,7 @@ const MainNavigator: React.FC = () => {
         name="ProfileTab"
         component={ProfileScreen}
         options={{
-          tabBarLabel: 'Profile',
+          tabBarLabel: t('tabs.profile'),
           tabBarIcon: ({ color }) => <TabIcon label="P" color={color} />,
         }}
       />
