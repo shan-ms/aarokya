@@ -5,6 +5,10 @@ import { Text, StyleSheet } from 'react-native';
 import HomeScreen from '../screens/HomeScreen';
 import HSADetailScreen from '../screens/HSADetailScreen';
 import ContributeScreen from '../screens/ContributeScreen';
+import CheckInScreen from '../screens/CheckInScreen';
+import RecordsVaultScreen from '../screens/RecordsVaultScreen';
+import PrivacyCenterScreen from '../screens/PrivacyCenterScreen';
+import FamilyProfilesScreen from '../screens/FamilyProfilesScreen';
 import InsuranceScreen from '../screens/InsuranceScreen';
 import ClaimsScreen from '../screens/ClaimsScreen';
 import HealthProfileScreen from '../screens/HealthProfileScreen';
@@ -16,6 +20,10 @@ export type HomeStackParamList = {
   HomeMain: undefined;
   HSADetail: undefined;
   Contribute: undefined;
+  CheckIn: undefined;
+  RecordsVault: undefined;
+  PrivacyCenter: undefined;
+  FamilyProfiles: undefined;
 };
 
 const HomeStack = createStackNavigator<HomeStackParamList>();
@@ -42,6 +50,26 @@ const HomeStackNavigator: React.FC = () => (
     <HomeStack.Screen
       name="Contribute"
       component={ContributeScreen}
+      options={{ headerTitle: '' }}
+    />
+    <HomeStack.Screen
+      name="CheckIn"
+      component={CheckInScreen}
+      options={{ headerTitle: '' }}
+    />
+    <HomeStack.Screen
+      name="RecordsVault"
+      component={RecordsVaultScreen}
+      options={{ headerTitle: '' }}
+    />
+    <HomeStack.Screen
+      name="PrivacyCenter"
+      component={PrivacyCenterScreen}
+      options={{ headerTitle: '' }}
+    />
+    <HomeStack.Screen
+      name="FamilyProfiles"
+      component={FamilyProfilesScreen}
       options={{ headerTitle: '' }}
     />
   </HomeStack.Navigator>
@@ -72,6 +100,7 @@ const InsuranceStackNavigator: React.FC = () => (
 export type MainTabParamList = {
   HomeTab: undefined;
   InsuranceTab: undefined;
+  RecordsTab: undefined;
   HealthTab: undefined;
   ProfileTab: undefined;
 };
@@ -116,6 +145,14 @@ const MainNavigator: React.FC = () => {
         options={{
           tabBarLabel: 'Insurance',
           tabBarIcon: ({ color }) => <TabIcon label="I" color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="RecordsTab"
+        component={RecordsVaultScreen}
+        options={{
+          tabBarLabel: 'Records',
+          tabBarIcon: ({ color }) => <TabIcon label="R" color={color} />,
         }}
       />
       <Tab.Screen

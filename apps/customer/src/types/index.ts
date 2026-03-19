@@ -159,3 +159,92 @@ export interface PaginatedResponse<T> {
   pageSize: number;
   hasMore: boolean;
 }
+
+// Consent (DPDP compliance)
+export interface ConsentRecord {
+  id: string;
+  userId: string;
+  purpose: string;
+  scope?: string;
+  grantedAt: string;
+  withdrawnAt?: string;
+}
+
+// Family profiles
+export interface FamilyMember {
+  id: string;
+  caregiverUserId: string;
+  memberName: string;
+  relationship: string;
+  dateOfBirth?: string;
+  gender?: string;
+  bloodGroup?: string;
+  allergies?: string[];
+  chronicConditions?: string[];
+  emergencyContact?: string;
+  status: string;
+  createdAt: string;
+}
+
+// Health documents
+export interface HealthDocument {
+  id: string;
+  userId: string;
+  familyMemberId?: string;
+  documentType: string;
+  title: string;
+  description?: string;
+  fileUrl?: string;
+  fileSizeBytes?: number;
+  mimeType?: string;
+  tags?: string[];
+  createdAt: string;
+}
+
+// Check-in / Triage
+export interface Symptom {
+  name: string;
+  severity: 'mild' | 'moderate' | 'severe';
+  duration?: string;
+}
+
+export type UrgencyLevel = 'self_care' | 'schedule_visit' | 'urgent' | 'emergency';
+
+export interface TriageResult {
+  urgencyLevel: UrgencyLevel;
+  recommendation: string;
+  suggestedActions: string[];
+  emergency: boolean;
+}
+
+export interface CheckinRecord {
+  id: string;
+  userId: string;
+  familyMemberId?: string;
+  symptoms: Symptom[];
+  urgencyLevel: UrgencyLevel;
+  recommendation: string;
+  createdAt: string;
+}
+
+export interface RecordShare {
+  id: string;
+  documentId?: string;
+  sharedWith: string;
+  purpose?: string;
+  sharedAt: string;
+  expiresAt?: string;
+  revokedAt?: string;
+}
+
+// Data export (DPDP)
+export interface DataExport {
+  user: User;
+  healthProfile?: HealthProfile;
+  hsa?: HSA;
+  contributions: Contribution[];
+  documents: HealthDocument[];
+  consents: ConsentRecord[];
+  familyMembers: FamilyMember[];
+  sharingHistory: RecordShare[];
+}

@@ -107,6 +107,36 @@ async fn main() -> std::io::Result<()> {
                                 "/{id}/review",
                                 web::patch().to(api::insurance::review_claim),
                             ),
+                    )
+                    .service(
+                        web::scope("/consent")
+                            .route("", web::post().to(api::consent::grant_consent))
+                            .route("", web::get().to(api::consent::list_consents))
+                            .route("/withdraw", web::post().to(api::consent::withdraw_consent))
+                            .route("/export", web::get().to(api::consent::export_data))
+                            .route("/delete-account", web::delete().to(api::consent::delete_account)),
+                    )
+                    .service(
+                        web::scope("/checkin")
+                            .route("", web::post().to(api::checkin::create_checkin))
+                            .route("", web::get().to(api::checkin::list_checkins)),
+                    )
+                    .service(
+                        web::scope("/documents")
+                            .route("", web::post().to(api::documents::create_document))
+                            .route("", web::get().to(api::documents::list_documents))
+                            .route("/{id}", web::get().to(api::documents::get_document))
+                            .route("/{id}", web::delete().to(api::documents::delete_document))
+                            .route("/share", web::post().to(api::documents::share_document))
+                            .route("/shared", web::get().to(api::documents::list_shared)),
+                    )
+                    .service(
+                        web::scope("/family")
+                            .route("", web::post().to(api::family::create_member))
+                            .route("", web::get().to(api::family::list_members))
+                            .route("/{id}", web::get().to(api::family::get_member))
+                            .route("/{id}", web::put().to(api::family::update_member))
+                            .route("/{id}", web::delete().to(api::family::delete_member)),
                     ),
             )
     })

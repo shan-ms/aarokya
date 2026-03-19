@@ -3,6 +3,8 @@ import { createStackNavigator } from '@react-navigation/stack';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import PhoneInputScreen from '../screens/auth/PhoneInputScreen';
 import OTPScreen from '../screens/auth/OTPScreen';
+import IntentScreen from '../screens/auth/IntentScreen';
+import ConsentScreen from '../screens/auth/ConsentScreen';
 import ABHALinkScreen from '../screens/auth/ABHALinkScreen';
 import HealthProfileSetupScreen from '../screens/auth/HealthProfileSetupScreen';
 import { colors } from '../theme/colors';
@@ -11,6 +13,8 @@ export type AuthStackParamList = {
   Welcome: undefined;
   PhoneInput: undefined;
   OTP: { phone: string };
+  Intent: undefined;
+  Consent: undefined;
   ABHALink: undefined;
   HealthProfileSetup: undefined;
 };
@@ -44,6 +48,16 @@ const AuthNavigator: React.FC = () => {
       <Stack.Screen
         name="OTP"
         component={OTPScreen}
+        options={headerOptions}
+      />
+      <Stack.Screen
+        name="Intent"
+        component={IntentScreen}
+        options={headerOptions}
+      />
+      <Stack.Screen
+        name="Consent"
+        component={ConsentScreen}
         options={headerOptions}
       />
       <Stack.Screen
