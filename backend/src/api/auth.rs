@@ -509,11 +509,15 @@ mod integration_tests {
         )
         .await;
 
+        // Use a non-dev phone so rate limiting is NOT skipped
+        let test_phone = "+919000000001";
+        let other_phone = "+919000000002";
+
         // Send 5 OTP requests (the limit)
         for i in 0..5 {
             let req = test::TestRequest::post()
                 .uri("/send-otp")
-                .set_json(serde_json::json!({ "phone": "+919876543210" }))
+                .set_json(serde_json::json!({ "phone": test_phone }))
                 .to_request();
             let resp = test::call_service(&app, req).await;
             assert_eq!(resp.status(), 200, "Request {} should succeed", i + 1);
@@ -522,7 +526,7 @@ mod integration_tests {
         // 6th request should be rate limited
         let req = test::TestRequest::post()
             .uri("/send-otp")
-            .set_json(serde_json::json!({ "phone": "+919876543210" }))
+            .set_json(serde_json::json!({ "phone": test_phone }))
             .to_request();
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), 400); // BadRequest for rate limit
@@ -530,7 +534,7 @@ mod integration_tests {
         // A different phone should still work
         let req = test::TestRequest::post()
             .uri("/send-otp")
-            .set_json(serde_json::json!({ "phone": "+919876543211" }))
+            .set_json(serde_json::json!({ "phone": other_phone }))
             .to_request();
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), 200);
