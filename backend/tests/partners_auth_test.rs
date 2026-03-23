@@ -17,8 +17,7 @@ use aarokya_backend::config::AppConfig;
 use aarokya_backend::domain::partner::{
     compute_coverage_rate, AddWorkerRequest, BulkContributionItem, BulkContributionRequest,
     BulkContributionResult, ContributionReport, ContributionReportRow, Partner, PartnerDashboard,
-    PartnerProfile, RegisterPartnerRequest, ReportQuery, WorkerWithHsaStatus,
-    VALID_PARTNER_TYPES,
+    PartnerProfile, RegisterPartnerRequest, ReportQuery, WorkerWithHsaStatus, VALID_PARTNER_TYPES,
 };
 use aarokya_backend::infrastructure::auth::{
     decode_token, encode_refresh_token, encode_token, encode_token_with_type, require_role,
@@ -243,7 +242,10 @@ mod partner_profile {
         assert_eq!(json["id"], id.to_string());
         assert_eq!(json["user_id"], user_id.to_string());
         assert_eq!(json["total_workers"], 0);
-        assert!(json.get("gstin").is_some(), "Null optional fields are present");
+        assert!(
+            json.get("gstin").is_some(),
+            "Null optional fields are present"
+        );
     }
 
     #[test]
@@ -815,9 +817,9 @@ mod auth_otp {
         {
             let mut rl = store.write().unwrap();
             let entry = rl.entry(phone.clone()).or_default();
-            entry.timestamps.retain(|ts| {
-                now.signed_duration_since(*ts).num_seconds() < RATE_LIMIT_WINDOW_SECS
-            });
+            entry
+                .timestamps
+                .retain(|ts| now.signed_duration_since(*ts).num_seconds() < RATE_LIMIT_WINDOW_SECS);
             assert!(
                 entry.timestamps.len() >= RATE_LIMIT_MAX,
                 "Should have reached the rate limit"
@@ -840,9 +842,9 @@ mod auth_otp {
                     .timestamps
                     .push(now - chrono::Duration::seconds(RATE_LIMIT_WINDOW_SECS + 60));
             }
-            entry.timestamps.retain(|ts| {
-                now.signed_duration_since(*ts).num_seconds() < RATE_LIMIT_WINDOW_SECS
-            });
+            entry
+                .timestamps
+                .retain(|ts| now.signed_duration_since(*ts).num_seconds() < RATE_LIMIT_WINDOW_SECS);
             assert_eq!(entry.timestamps.len(), 0, "Old entries should be pruned");
             assert!(
                 entry.timestamps.len() < RATE_LIMIT_MAX,
@@ -958,13 +960,8 @@ mod auth_jwt {
         let refresh_claims = decode_token(&refresh, JWT_SECRET).unwrap();
 
         // Simulate what the refresh handler does: issue a new access token
-        let access = encode_token(
-            refresh_claims.sub,
-            &refresh_claims.user_type,
-            JWT_SECRET,
-            1,
-        )
-        .unwrap();
+        let access =
+            encode_token(refresh_claims.sub, &refresh_claims.user_type, JWT_SECRET, 1).unwrap();
         let access_claims = decode_token(&access, JWT_SECRET).unwrap();
         assert_eq!(access_claims.sub, uid);
         assert_eq!(access_claims.user_type, "partner");
@@ -1014,7 +1011,12 @@ mod auth_jwt {
 
     #[test]
     fn token_claims_preserve_user_type() {
-        for user_type in &["customer", "partner", "operator_super_admin", "operator_support"] {
+        for user_type in &[
+            "customer",
+            "partner",
+            "operator_super_admin",
+            "operator_support",
+        ] {
             let uid = Uuid::new_v4();
             let token = encode_token(uid, user_type, JWT_SECRET, 1).unwrap();
             let claims = decode_token(&token, JWT_SECRET).unwrap();
@@ -1147,7 +1149,12 @@ mod auth_rbac {
         for role in &roles {
             let s = role.as_str();
             let parsed = Role::from_str(s);
-            assert_eq!(parsed.as_ref(), Some(role), "Round-trip failed for {:?}", role);
+            assert_eq!(
+                parsed.as_ref(),
+                Some(role),
+                "Round-trip failed for {:?}",
+                role
+            );
         }
     }
 
@@ -1209,10 +1216,7 @@ mod error_responses {
     #[test]
     fn too_many_requests_returns_429() {
         let err = AppError::TooManyRequests("Slow down".to_string());
-        assert_eq!(
-            err.error_response().status(),
-            StatusCode::TOO_MANY_REQUESTS
-        );
+        assert_eq!(err.error_response().status(), StatusCode::TOO_MANY_REQUESTS);
     }
 
     #[test]
@@ -1235,11 +1239,10 @@ mod error_responses {
 
 mod actix_integration {
     use super::*;
-    use actix_web::{test, web, App};
     use aarokya_backend::api::auth::{
-        send_otp, refresh_token as refresh_token_handler, OtpStore, RateLimitStore,
-        RefreshResponse,
+        refresh_token as refresh_token_handler, send_otp, OtpStore, RateLimitStore, RefreshResponse,
     };
+    use actix_web::{test, web, App};
 
     fn test_app_data() -> (
         web::Data<AppConfig>,
@@ -1282,11 +1285,7 @@ mod actix_integration {
             .set_json(serde_json::json!({ "phone": "+919876500000" }))
             .to_request();
         let resp = test::call_service(&app, req).await;
-        assert_eq!(
-            resp.status(),
-            400,
-            "6th OTP request should be rate-limited"
-        );
+        assert_eq!(resp.status(), 400, "6th OTP request should be rate-limited");
     }
 
     #[actix_rt::test]

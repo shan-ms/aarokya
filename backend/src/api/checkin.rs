@@ -4,9 +4,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 use validator::Validate;
 
-use crate::domain::checkin::{
-    triage_symptoms, CheckinRecord, CreateCheckinRequest, TriageResult,
-};
+use crate::domain::checkin::{triage_symptoms, CheckinRecord, CreateCheckinRequest, TriageResult};
 use crate::infrastructure::auth::AuthenticatedUser;
 use crate::infrastructure::error::AppError;
 

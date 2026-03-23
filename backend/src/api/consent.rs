@@ -118,12 +118,10 @@ pub async fn export_data(
     auth: AuthenticatedUser,
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, AppError> {
-    let user = sqlx::query_as::<_, User>(
-        "SELECT * FROM users WHERE id = $1",
-    )
-    .bind(auth.user_id)
-    .fetch_optional(pool.get_ref())
-    .await?;
+    let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = $1")
+        .bind(auth.user_id)
+        .fetch_optional(pool.get_ref())
+        .await?;
 
     let consents = sqlx::query_as::<_, ConsentRecord>(
         "SELECT * FROM consent_records WHERE user_id = $1 ORDER BY created_at DESC",

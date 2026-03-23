@@ -8,15 +8,15 @@ use uuid::Uuid;
 use validator::Validate;
 
 use aarokya_backend::domain::contribution::{
-    ContributionListParams, ContributionSummary, ContributionSummaryResponse, CreateContributionRequest,
-    MonthlySummary, VALID_SOURCE_TYPES,
+    ContributionListParams, ContributionSummary, ContributionSummaryResponse,
+    CreateContributionRequest, MonthlySummary, VALID_SOURCE_TYPES,
 };
 use aarokya_backend::domain::hsa::{
-    self, CreateHsaRequest, HealthSavingsAccount, HsaDashboard,
-    BASIC_INSURANCE_THRESHOLD, PREMIUM_INSURANCE_THRESHOLD,
+    self, CreateHsaRequest, HealthSavingsAccount, HsaDashboard, BASIC_INSURANCE_THRESHOLD,
+    PREMIUM_INSURANCE_THRESHOLD,
 };
 use aarokya_backend::infrastructure::auth::{
-    encode_token, decode_token, AuthenticatedUser, Role, require_role,
+    decode_token, encode_token, require_role, AuthenticatedUser, Role,
 };
 use aarokya_backend::infrastructure::error::AppError;
 
@@ -40,7 +40,10 @@ mod hsa_tests {
         let req = CreateHsaRequest {
             abha_id: "12-3456-7890-1234".to_string(),
         };
-        assert!(req.validate().is_ok(), "A valid ABHA ID should pass validation");
+        assert!(
+            req.validate().is_ok(),
+            "A valid ABHA ID should pass validation"
+        );
     }
 
     #[test]
@@ -99,7 +102,10 @@ mod hsa_tests {
         let err = AppError::Conflict("User already has an HSA account".to_string());
         let msg = format!("{}", err);
         assert!(msg.contains("Conflict"), "Error should indicate conflict");
-        assert!(msg.contains("already has an HSA"), "Error should mention duplicate");
+        assert!(
+            msg.contains("already has an HSA"),
+            "Error should mention duplicate"
+        );
     }
 
     #[test]
@@ -209,10 +215,9 @@ mod hsa_tests {
     fn expired_token_produces_error() {
         let uid = Uuid::new_v4();
         // Encode with -1 hour expiry (already expired)
-        let token = aarokya_backend::infrastructure::auth::encode_token(
-            uid, "customer", JWT_SECRET, -1,
-        )
-        .unwrap();
+        let token =
+            aarokya_backend::infrastructure::auth::encode_token(uid, "customer", JWT_SECRET, -1)
+                .unwrap();
         let result = decode_token(&token, JWT_SECRET);
         assert!(result.is_err(), "Expired token should be rejected");
     }
@@ -625,7 +630,10 @@ mod contribution_tests {
             idempotency_key: "key".to_string(),
             metadata: None,
         };
-        assert!(req.validate().is_err(), "Zero amount should fail validation");
+        assert!(
+            req.validate().is_err(),
+            "Zero amount should fail validation"
+        );
     }
 
     #[test]
@@ -637,7 +645,10 @@ mod contribution_tests {
             idempotency_key: "key".to_string(),
             metadata: None,
         };
-        assert!(req.validate().is_err(), "Negative amount should fail validation");
+        assert!(
+            req.validate().is_err(),
+            "Negative amount should fail validation"
+        );
     }
 
     #[test]
@@ -839,14 +850,8 @@ mod contribution_tests {
         let params: ContributionListParams = serde_json::from_str(json).unwrap();
         assert!(params.date_from.is_some());
         assert!(params.date_to.is_some());
-        assert_eq!(
-            params.date_from.unwrap().to_string(),
-            "2024-01-01"
-        );
-        assert_eq!(
-            params.date_to.unwrap().to_string(),
-            "2024-12-31"
-        );
+        assert_eq!(params.date_from.unwrap().to_string(), "2024-01-01");
+        assert_eq!(params.date_to.unwrap().to_string(), "2024-12-31");
     }
 
     #[test]

@@ -40,12 +40,10 @@ pub async fn subscribe(
     .ok_or_else(|| AppError::NotFound("HSA account not found".to_string()))?;
 
     // Check eligibility based on total contributions
-    check_eligibility(hsa.total_contributed_paise, &plan)
-        .map_err(|e| AppError::BadRequest(e))?;
+    check_eligibility(hsa.total_contributed_paise, &plan).map_err(|e| AppError::BadRequest(e))?;
 
     // Check balance for premium deduction
-    check_balance_for_premium(hsa.balance_paise, &plan)
-        .map_err(|e| AppError::BadRequest(e))?;
+    check_balance_for_premium(hsa.balance_paise, &plan).map_err(|e| AppError::BadRequest(e))?;
 
     // Check for existing active policy of same plan
     let existing = sqlx::query_scalar::<_, i64>(
@@ -287,9 +285,9 @@ pub async fn review_claim(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use actix_web::{test, web, App};
     use crate::config::AppConfig;
     use crate::infrastructure::auth::encode_token;
+    use actix_web::{test, web, App};
 
     /// Helper to build a test app with all insurance/claims routes.
     fn test_app(
@@ -395,14 +393,12 @@ mod tests {
         let hsa_id = Uuid::new_v4();
         let phone = format!("+91{}", &Uuid::new_v4().to_string()[..10]);
 
-        sqlx::query(
-            "INSERT INTO users (id, phone, user_type) VALUES ($1, $2, 'customer')",
-        )
-        .bind(user_id)
-        .bind(&phone)
-        .execute(pool)
-        .await
-        .unwrap();
+        sqlx::query("INSERT INTO users (id, phone, user_type) VALUES ($1, $2, 'customer')")
+            .bind(user_id)
+            .bind(&phone)
+            .execute(pool)
+            .await
+            .unwrap();
 
         sqlx::query(
             r#"INSERT INTO health_savings_accounts (id, user_id, abha_id, balance_paise, total_contributed_paise, status)

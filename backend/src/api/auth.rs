@@ -30,7 +30,10 @@ impl OtpEntry {
     }
 
     pub fn is_expired(&self) -> bool {
-        chrono::Utc::now().signed_duration_since(self.created_at).num_seconds() > self.ttl_secs
+        chrono::Utc::now()
+            .signed_duration_since(self.created_at)
+            .num_seconds()
+            > self.ttl_secs
     }
 }
 
@@ -157,7 +160,12 @@ pub async fn verify_otp(
     let phone = body.phone.trim().to_string();
     let otp = body.otp.trim().to_string();
 
-    tracing::debug!("verify_otp: phone={:?} otp={:?} is_dev={}", phone, otp, config.is_dev_otp_phone(&phone));
+    tracing::debug!(
+        "verify_otp: phone={:?} otp={:?} is_dev={}",
+        phone,
+        otp,
+        config.is_dev_otp_phone(&phone)
+    );
 
     // ── Dev whitelist: accept fixed OTP without store lookup ──────────────
     let dev_bypass = config.is_dev_otp_phone(&phone) && otp == DEV_OTP_CODE;
@@ -183,36 +191,35 @@ pub async fn verify_otp(
         store.remove(&phone);
     }
 
-    let user_type = body
-        .user_type
-        .as_deref()
-        .unwrap_or("customer")
-        .to_string();
+    let user_type = body.user_type.as_deref().unwrap_or("customer").to_string();
 
     // ── Upsert user ──────────────────────────────────────────────────────
-    let existing_user = sqlx::query_as::<_, crate::domain::user::User>(
-        "SELECT * FROM users WHERE phone = $1",
-    )
-    .bind(&phone)
-    .fetch_optional(pool.get_ref())
-    .await?;
+    let existing_user =
+        sqlx::query_as::<_, crate::domain::user::User>("SELECT * FROM users WHERE phone = $1")
+            .bind(&phone)
+            .fetch_optional(pool.get_ref())
+            .await?;
 
     let (user_id, is_new_user, final_user_type) = match existing_user {
         Some(user) => {
             // Dev: allow switching role when using same phone from different apps
             let effective_type = if config.is_dev_otp_phone(&phone) {
                 if user_type == "customer" && user.user_type.starts_with("operator_") {
-                    sqlx::query("UPDATE users SET user_type = 'customer', updated_at = NOW() WHERE id = $1")
-                        .bind(user.id)
-                        .execute(pool.get_ref())
-                        .await?;
+                    sqlx::query(
+                        "UPDATE users SET user_type = 'customer', updated_at = NOW() WHERE id = $1",
+                    )
+                    .bind(user.id)
+                    .execute(pool.get_ref())
+                    .await?;
                     "customer".to_string()
                 } else if user_type.starts_with("operator_") && user.user_type == "customer" {
-                    sqlx::query("UPDATE users SET user_type = $1, updated_at = NOW() WHERE id = $2")
-                        .bind(&user_type)
-                        .bind(user.id)
-                        .execute(pool.get_ref())
-                        .await?;
+                    sqlx::query(
+                        "UPDATE users SET user_type = $1, updated_at = NOW() WHERE id = $2",
+                    )
+                    .bind(&user_type)
+                    .bind(user.id)
+                    .execute(pool.get_ref())
+                    .await?;
                     user_type
                 } else {
                     user.user_type
@@ -244,9 +251,8 @@ pub async fn verify_otp(
     )
     .map_err(|e| AppError::Internal(format!("Token generation failed: {}", e)))?;
 
-    let refresh_token =
-        encode_refresh_token(user_id, &final_user_type, &config.jwt_secret, 24 * 7)
-            .map_err(|e| AppError::Internal(format!("Token generation failed: {}", e)))?;
+    let refresh_token = encode_refresh_token(user_id, &final_user_type, &config.jwt_secret, 24 * 7)
+        .map_err(|e| AppError::Internal(format!("Token generation failed: {}", e)))?;
 
     Ok(HttpResponse::Ok().json(AuthResponse {
         access_token,
@@ -714,9 +720,7 @@ mod integration_tests {
         )
         .await;
 
-        let req = test::TestRequest::get()
-            .uri("/protected")
-            .to_request();
+        let req = test::TestRequest::get().uri("/protected").to_request();
 
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), 401);

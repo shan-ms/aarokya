@@ -7,7 +7,7 @@ use validator::Validate;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Symptom {
     pub name: String,
-    pub severity: String,      // "mild", "moderate", "severe"
+    pub severity: String, // "mild", "moderate", "severe"
     pub duration: Option<String>,
 }
 
@@ -41,20 +41,45 @@ pub struct TriageResult {
 
 // Emergency symptom keywords
 const EMERGENCY_KEYWORDS: &[&str] = &[
-    "chest pain", "breathing difficulty", "unconscious", "severe bleeding",
-    "stroke", "heart attack", "seizure", "choking", "poisoning",
-    "suicidal", "head injury", "paralysis", "anaphylaxis",
+    "chest pain",
+    "breathing difficulty",
+    "unconscious",
+    "severe bleeding",
+    "stroke",
+    "heart attack",
+    "seizure",
+    "choking",
+    "poisoning",
+    "suicidal",
+    "head injury",
+    "paralysis",
+    "anaphylaxis",
 ];
 
 const URGENT_KEYWORDS: &[&str] = &[
-    "high fever", "persistent vomiting", "severe pain", "blood in stool",
-    "blood in urine", "fainting", "confusion", "swelling",
-    "allergic reaction", "dehydration",
+    "high fever",
+    "persistent vomiting",
+    "severe pain",
+    "blood in stool",
+    "blood in urine",
+    "fainting",
+    "confusion",
+    "swelling",
+    "allergic reaction",
+    "dehydration",
 ];
 
 pub fn triage_symptoms(symptoms: &[Symptom]) -> TriageResult {
-    let all_text: String = symptoms.iter()
-        .map(|s| format!("{} {} {}", s.name, s.severity, s.duration.as_deref().unwrap_or("")))
+    let all_text: String = symptoms
+        .iter()
+        .map(|s| {
+            format!(
+                "{} {} {}",
+                s.name,
+                s.severity,
+                s.duration.as_deref().unwrap_or("")
+            )
+        })
         .collect::<Vec<_>>()
         .join(" ")
         .to_lowercase();
@@ -151,7 +176,11 @@ mod tests {
 
     #[test]
     fn test_emergency_stroke_keyword() {
-        let symptoms = vec![symptom("possible stroke symptoms", "severe", Some("30 min"))];
+        let symptoms = vec![symptom(
+            "possible stroke symptoms",
+            "severe",
+            Some("30 min"),
+        )];
         let result = triage_symptoms(&symptoms);
         assert_eq!(result.urgency_level, "emergency");
         assert!(result.emergency);

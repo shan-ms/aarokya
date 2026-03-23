@@ -22,8 +22,9 @@ pub async fn create_member(
         .date_of_birth
         .as_ref()
         .map(|d| {
-            NaiveDate::parse_from_str(d, "%Y-%m-%d")
-                .map_err(|_| AppError::Validation("Invalid date format. Use YYYY-MM-DD".to_string()))
+            NaiveDate::parse_from_str(d, "%Y-%m-%d").map_err(|_| {
+                AppError::Validation("Invalid date format. Use YYYY-MM-DD".to_string())
+            })
         })
         .transpose()?;
 
@@ -136,17 +137,20 @@ pub async fn update_member(
 
     let member_name = body.member_name.as_deref().unwrap_or(&existing.member_name);
 
-    let date_of_birth = if let Some(ref d) = body.date_of_birth {
-        Some(
-            NaiveDate::parse_from_str(d, "%Y-%m-%d")
-                .map_err(|_| AppError::Validation("Invalid date format. Use YYYY-MM-DD".to_string()))?,
-        )
-    } else {
-        existing.date_of_birth
-    };
+    let date_of_birth =
+        if let Some(ref d) = body.date_of_birth {
+            Some(NaiveDate::parse_from_str(d, "%Y-%m-%d").map_err(|_| {
+                AppError::Validation("Invalid date format. Use YYYY-MM-DD".to_string())
+            })?)
+        } else {
+            existing.date_of_birth
+        };
 
     let gender = body.gender.as_deref().or(existing.gender.as_deref());
-    let blood_group = body.blood_group.as_deref().or(existing.blood_group.as_deref());
+    let blood_group = body
+        .blood_group
+        .as_deref()
+        .or(existing.blood_group.as_deref());
     let emergency_contact = body
         .emergency_contact
         .as_deref()

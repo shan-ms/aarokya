@@ -154,9 +154,9 @@ pub async fn share_document(
     .ok_or_else(|| AppError::NotFound("Document not found".to_string()))?;
 
     let id = Uuid::new_v4();
-    let expires_at = body.expires_in_hours.map(|hours| {
-        chrono::Utc::now() + chrono::Duration::hours(hours)
-    });
+    let expires_at = body
+        .expires_in_hours
+        .map(|hours| chrono::Utc::now() + chrono::Duration::hours(hours));
 
     let sharing_log = sqlx::query_as::<_, RecordSharingLog>(
         r#"INSERT INTO record_sharing_log (id, user_id, document_id, shared_with, purpose, expires_at)

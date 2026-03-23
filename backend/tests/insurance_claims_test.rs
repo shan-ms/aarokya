@@ -105,7 +105,10 @@ mod insurance_plans {
     fn find_plan_nonexistent_returns_none() {
         assert!(find_plan("nonexistent-plan").is_none());
         assert!(find_plan("").is_none());
-        assert!(find_plan("BASIC-HEALTH").is_none(), "IDs are case-sensitive");
+        assert!(
+            find_plan("BASIC-HEALTH").is_none(),
+            "IDs are case-sensitive"
+        );
     }
 
     // ── 6. Plan eligibility - basic plan requires >= 399900 paise ───────────
@@ -291,7 +294,10 @@ mod subscribe_request {
     fn deserialize_subscribe_request_missing_plan_id_fails() {
         let json = r#"{}"#;
         let result = serde_json::from_str::<SubscribeRequest>(json);
-        assert!(result.is_err(), "Missing plan_id should fail deserialization");
+        assert!(
+            result.is_err(),
+            "Missing plan_id should fail deserialization"
+        );
     }
 
     #[test]
@@ -300,16 +306,16 @@ mod subscribe_request {
         let req: SubscribeRequest = serde_json::from_str(json).unwrap();
         assert_eq!(req.plan_id, "");
         // Empty string deserializes, but find_plan will return None
-        assert!(
-            aarokya_backend::domain::insurance::find_plan(&req.plan_id).is_none()
-        );
+        assert!(aarokya_backend::domain::insurance::find_plan(&req.plan_id).is_none());
     }
 }
 
 // ── Claims domain tests ─────────────────────────────────────────────────────
 
 mod claim_validation {
-    use aarokya_backend::domain::claim::{is_claim_finalized, is_valid_review_status, validate_claim_amount};
+    use aarokya_backend::domain::claim::{
+        is_claim_finalized, is_valid_review_status, validate_claim_amount,
+    };
     use aarokya_backend::domain::insurance::{
         BASIC_PLAN_COVERAGE_PAISE, PREMIUM_PLAN_COVERAGE_PAISE,
     };
@@ -334,8 +340,7 @@ mod claim_validation {
     fn validate_claim_amount_within_premium_coverage() {
         assert!(validate_claim_amount(25_000_000, PREMIUM_PLAN_COVERAGE_PAISE).is_ok());
         assert!(
-            validate_claim_amount(PREMIUM_PLAN_COVERAGE_PAISE, PREMIUM_PLAN_COVERAGE_PAISE)
-                .is_ok()
+            validate_claim_amount(PREMIUM_PLAN_COVERAGE_PAISE, PREMIUM_PLAN_COVERAGE_PAISE).is_ok()
         );
     }
 
@@ -357,7 +362,8 @@ mod claim_validation {
 
     #[test]
     fn validate_claim_amount_exceeds_coverage() {
-        let result = validate_claim_amount(BASIC_PLAN_COVERAGE_PAISE + 1, BASIC_PLAN_COVERAGE_PAISE);
+        let result =
+            validate_claim_amount(BASIC_PLAN_COVERAGE_PAISE + 1, BASIC_PLAN_COVERAGE_PAISE);
         assert!(result.is_err());
         let err = result.unwrap_err();
         assert!(
@@ -384,7 +390,10 @@ mod claim_validation {
 
     #[test]
     fn invalid_review_statuses() {
-        assert!(!is_valid_review_status("submitted"), "submitted is not a valid review status");
+        assert!(
+            !is_valid_review_status("submitted"),
+            "submitted is not a valid review status"
+        );
         assert!(!is_valid_review_status("pending"));
         assert!(!is_valid_review_status(""));
         assert!(!is_valid_review_status("APPROVED"), "Case-sensitive check");
@@ -525,7 +534,10 @@ mod claim_serialization {
             "amount_paise": 500_000
         });
         let result = serde_json::from_value::<SubmitClaimRequest>(json);
-        assert!(result.is_err(), "Missing policy_id should fail deserialization");
+        assert!(
+            result.is_err(),
+            "Missing policy_id should fail deserialization"
+        );
     }
 
     #[test]
@@ -624,7 +636,10 @@ mod claim_serialization {
             "review_notes": "Some notes"
         });
         let result = serde_json::from_value::<ReviewClaimRequest>(json);
-        assert!(result.is_err(), "Missing status should fail deserialization");
+        assert!(
+            result.is_err(),
+            "Missing status should fail deserialization"
+        );
     }
 }
 
@@ -646,9 +661,11 @@ mod claim_review_authorization {
     #[test]
     fn operator_insurance_ops_can_review_claims() {
         let user = make_user("operator_insurance_ops");
-        assert!(
-            require_role(&user, &[Role::OperatorInsuranceOps, Role::OperatorSuperAdmin]).is_ok()
-        );
+        assert!(require_role(
+            &user,
+            &[Role::OperatorInsuranceOps, Role::OperatorSuperAdmin]
+        )
+        .is_ok());
     }
 
     // ── 6. Review claim - operator can reject with reason ───────────────────
@@ -656,9 +673,11 @@ mod claim_review_authorization {
     #[test]
     fn operator_super_admin_can_review_claims() {
         let user = make_user("operator_super_admin");
-        assert!(
-            require_role(&user, &[Role::OperatorInsuranceOps, Role::OperatorSuperAdmin]).is_ok()
-        );
+        assert!(require_role(
+            &user,
+            &[Role::OperatorInsuranceOps, Role::OperatorSuperAdmin]
+        )
+        .is_ok());
     }
 
     // ── 7. Review claim - non-operator gets 403 ────────────────────────────
@@ -666,24 +685,36 @@ mod claim_review_authorization {
     #[test]
     fn customer_cannot_review_claims() {
         let user = make_user("customer");
-        let result =
-            require_role(&user, &[Role::OperatorInsuranceOps, Role::OperatorSuperAdmin]);
-        assert!(result.is_err(), "Customer should not be allowed to review claims");
+        let result = require_role(
+            &user,
+            &[Role::OperatorInsuranceOps, Role::OperatorSuperAdmin],
+        );
+        assert!(
+            result.is_err(),
+            "Customer should not be allowed to review claims"
+        );
     }
 
     #[test]
     fn partner_cannot_review_claims() {
         let user = make_user("partner");
-        let result =
-            require_role(&user, &[Role::OperatorInsuranceOps, Role::OperatorSuperAdmin]);
-        assert!(result.is_err(), "Partner should not be allowed to review claims");
+        let result = require_role(
+            &user,
+            &[Role::OperatorInsuranceOps, Role::OperatorSuperAdmin],
+        );
+        assert!(
+            result.is_err(),
+            "Partner should not be allowed to review claims"
+        );
     }
 
     #[test]
     fn operator_support_cannot_review_claims() {
         let user = make_user("operator_support");
-        let result =
-            require_role(&user, &[Role::OperatorInsuranceOps, Role::OperatorSuperAdmin]);
+        let result = require_role(
+            &user,
+            &[Role::OperatorInsuranceOps, Role::OperatorSuperAdmin],
+        );
         assert!(
             result.is_err(),
             "Support operator should not be allowed to review claims"
@@ -693,16 +724,20 @@ mod claim_review_authorization {
     #[test]
     fn operator_analytics_cannot_review_claims() {
         let user = make_user("operator_analytics");
-        let result =
-            require_role(&user, &[Role::OperatorInsuranceOps, Role::OperatorSuperAdmin]);
+        let result = require_role(
+            &user,
+            &[Role::OperatorInsuranceOps, Role::OperatorSuperAdmin],
+        );
         assert!(result.is_err());
     }
 
     #[test]
     fn unknown_role_cannot_review_claims() {
         let user = make_user("alien");
-        let result =
-            require_role(&user, &[Role::OperatorInsuranceOps, Role::OperatorSuperAdmin]);
+        let result = require_role(
+            &user,
+            &[Role::OperatorInsuranceOps, Role::OperatorSuperAdmin],
+        );
         assert!(result.is_err(), "Unknown role should be forbidden");
     }
 
@@ -752,8 +787,9 @@ mod auth_for_insurance {
     fn expired_token_fails_decode() {
         let user_id = Uuid::new_v4();
         // Negative expiry creates already-expired token
-        let token = aarokya_backend::infrastructure::auth::encode_token(user_id, "customer", SECRET, -1)
-            .unwrap();
+        let token =
+            aarokya_backend::infrastructure::auth::encode_token(user_id, "customer", SECRET, -1)
+                .unwrap();
         assert!(
             decode_token(&token, SECRET).is_err(),
             "Expired token should fail authentication"

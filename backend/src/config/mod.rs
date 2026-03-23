@@ -27,8 +27,8 @@ fn normalize_phone(phone: &str) -> String {
 impl AppConfig {
     /// Returns true if phone is whitelisted for dev OTP (fixed code 123456).
     pub fn is_dev_otp_phone(&self, phone: &str) -> bool {
-        let dev_phone = std::env::var("DEV_OTP_PHONE")
-            .unwrap_or_else(|_| DEFAULT_DEV_OTP_PHONE.to_string());
+        let dev_phone =
+            std::env::var("DEV_OTP_PHONE").unwrap_or_else(|_| DEFAULT_DEV_OTP_PHONE.to_string());
         if dev_phone.is_empty() {
             return false;
         }

@@ -35,9 +35,17 @@ pub struct CreateContributionRequest {
     #[validate(length(min = 1, message = "source_type must not be empty"))]
     pub source_type: String,
     pub source_id: Option<Uuid>,
-    #[validate(range(min = 1, max = 100_000_000, message = "amount_paise must be between 1 and 100000000"))]
+    #[validate(range(
+        min = 1,
+        max = 100_000_000,
+        message = "amount_paise must be between 1 and 100000000"
+    ))]
     pub amount_paise: i64,
-    #[validate(length(min = 1, max = 255, message = "idempotency_key must be between 1 and 255 characters"))]
+    #[validate(length(
+        min = 1,
+        max = 255,
+        message = "idempotency_key must be between 1 and 255 characters"
+    ))]
     pub idempotency_key: String,
     pub metadata: Option<serde_json::Value>,
 }
@@ -187,7 +195,11 @@ mod tests {
                 idempotency_key: "key".to_string(),
                 metadata: None,
             };
-            assert!(req.validate_source_type().is_ok(), "Expected '{}' to be valid", st);
+            assert!(
+                req.validate_source_type().is_ok(),
+                "Expected '{}' to be valid",
+                st
+            );
         }
     }
 

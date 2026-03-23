@@ -3,9 +3,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 use validator::Validate;
 
-use crate::domain::hsa::{
-    self, CreateHsaRequest, HsaDashboard, HealthSavingsAccount,
-};
+use crate::domain::hsa::{self, CreateHsaRequest, HealthSavingsAccount, HsaDashboard};
 use crate::infrastructure::auth::AuthenticatedUser;
 use crate::infrastructure::error::AppError;
 
@@ -103,11 +101,12 @@ pub async fn get_dashboard(
     .await?
     .ok_or_else(|| AppError::NotFound("HSA account not found".to_string()))?;
 
-    let contribution_count: (i64,) =
-        sqlx::query_as("SELECT COUNT(*) FROM contributions WHERE hsa_id = $1 AND status = 'completed'")
-            .bind(hsa.id)
-            .fetch_one(pool.get_ref())
-            .await?;
+    let contribution_count: (i64,) = sqlx::query_as(
+        "SELECT COUNT(*) FROM contributions WHERE hsa_id = $1 AND status = 'completed'",
+    )
+    .bind(hsa.id)
+    .fetch_one(pool.get_ref())
+    .await?;
 
     // Calculate account age in days for velocity
     let account_age_days = hsa

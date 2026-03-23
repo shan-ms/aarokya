@@ -51,9 +51,7 @@ pub async fn register_partner(
         .await?;
 
     if existing.is_some() {
-        return Err(AppError::Conflict(
-            "Partner already registered".to_string(),
-        ));
+        return Err(AppError::Conflict("Partner already registered".to_string()));
     }
 
     let id = Uuid::new_v4();
@@ -150,19 +148,15 @@ pub async fn add_worker(
 
     // Find the worker user by phone or ABHA ID
     let worker_user = if let Some(ref phone) = body.worker_phone {
-        sqlx::query_as::<_, crate::domain::user::User>(
-            "SELECT * FROM users WHERE phone = $1",
-        )
-        .bind(phone)
-        .fetch_optional(pool.get_ref())
-        .await?
+        sqlx::query_as::<_, crate::domain::user::User>("SELECT * FROM users WHERE phone = $1")
+            .bind(phone)
+            .fetch_optional(pool.get_ref())
+            .await?
     } else if let Some(ref abha_id) = body.abha_id {
-        sqlx::query_as::<_, crate::domain::user::User>(
-            "SELECT * FROM users WHERE abha_id = $1",
-        )
-        .bind(abha_id)
-        .fetch_optional(pool.get_ref())
-        .await?
+        sqlx::query_as::<_, crate::domain::user::User>("SELECT * FROM users WHERE abha_id = $1")
+            .bind(abha_id)
+            .fetch_optional(pool.get_ref())
+            .await?
     } else {
         None
     };
@@ -302,8 +296,7 @@ pub async fn bulk_contribute(
     body: web::Json<BulkContributionRequest>,
 ) -> Result<HttpResponse, AppError> {
     // Validate the request
-    body.validate_items()
-        .map_err(|e| AppError::Validation(e))?;
+    body.validate_items().map_err(|e| AppError::Validation(e))?;
 
     let partner = fetch_partner(&auth, pool.get_ref()).await?;
 
@@ -316,12 +309,11 @@ pub async fn bulk_contribute(
 
     for item in &body.contributions {
         // Find user by phone
-        let worker_user = sqlx::query_as::<_, crate::domain::user::User>(
-            "SELECT * FROM users WHERE phone = $1",
-        )
-        .bind(&item.worker_phone)
-        .fetch_optional(&mut *tx)
-        .await;
+        let worker_user =
+            sqlx::query_as::<_, crate::domain::user::User>("SELECT * FROM users WHERE phone = $1")
+                .bind(&item.worker_phone)
+                .fetch_optional(&mut *tx)
+                .await;
 
         let worker_user = match worker_user {
             Ok(Some(u)) => u,
@@ -807,7 +799,9 @@ mod tests {
                 idempotency_key: format!("key-{}", i),
             })
             .collect();
-        let req = BulkContributionRequest { contributions: items };
+        let req = BulkContributionRequest {
+            contributions: items,
+        };
         let result = req.validate_items();
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("Maximum 1000"));
@@ -922,13 +916,11 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_get_partner_route_exists() {
-        let app = actix_test::init_service(
-            App::new().service(
-                web::scope("/api/v1/partners")
-                    .route("/me", web::get().to(mock_get_partner)),
-            ),
-        )
-        .await;
+        let app =
+            actix_test::init_service(App::new().service(
+                web::scope("/api/v1/partners").route("/me", web::get().to(mock_get_partner)),
+            ))
+            .await;
 
         let req = actix_test::TestRequest::get()
             .uri("/api/v1/partners/me")
@@ -939,12 +931,9 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_dashboard_route_exists() {
-        let app = actix_test::init_service(
-            App::new().service(
-                web::scope("/api/v1/partners")
-                    .route("/dashboard", web::get().to(mock_dashboard)),
-            ),
-        )
+        let app = actix_test::init_service(App::new().service(
+            web::scope("/api/v1/partners").route("/dashboard", web::get().to(mock_dashboard)),
+        ))
         .await;
 
         let req = actix_test::TestRequest::get()
@@ -960,12 +949,9 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_reports_route_exists() {
-        let app = actix_test::init_service(
-            App::new().service(
-                web::scope("/api/v1/partners")
-                    .route("/reports", web::get().to(mock_reports)),
-            ),
-        )
+        let app = actix_test::init_service(App::new().service(
+            web::scope("/api/v1/partners").route("/reports", web::get().to(mock_reports)),
+        ))
         .await;
 
         let req = actix_test::TestRequest::get()
@@ -981,12 +967,9 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_list_workers_route_exists() {
-        let app = actix_test::init_service(
-            App::new().service(
-                web::scope("/api/v1/partners")
-                    .route("/workers", web::get().to(mock_list_workers)),
-            ),
-        )
+        let app = actix_test::init_service(App::new().service(
+            web::scope("/api/v1/partners").route("/workers", web::get().to(mock_list_workers)),
+        ))
         .await;
 
         let req = actix_test::TestRequest::get()
@@ -1001,12 +984,9 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_add_worker_route_exists() {
-        let app = actix_test::init_service(
-            App::new().service(
-                web::scope("/api/v1/partners")
-                    .route("/workers", web::post().to(mock_add_worker)),
-            ),
-        )
+        let app = actix_test::init_service(App::new().service(
+            web::scope("/api/v1/partners").route("/workers", web::post().to(mock_add_worker)),
+        ))
         .await;
 
         let req = actix_test::TestRequest::post()

@@ -90,7 +90,10 @@ async fn main() -> std::io::Result<()> {
                                 "/contributions/bulk",
                                 web::post().to(api::partners::bulk_contribute),
                             )
-                            .route("/dashboard", web::get().to(api::partners::partner_dashboard))
+                            .route(
+                                "/dashboard",
+                                web::get().to(api::partners::partner_dashboard),
+                            )
                             .route("/reports", web::get().to(api::partners::partner_reports)),
                     )
                     .service(
@@ -114,7 +117,10 @@ async fn main() -> std::io::Result<()> {
                             .route("", web::get().to(api::consent::list_consents))
                             .route("/withdraw", web::post().to(api::consent::withdraw_consent))
                             .route("/export", web::get().to(api::consent::export_data))
-                            .route("/delete-account", web::delete().to(api::consent::delete_account)),
+                            .route(
+                                "/delete-account",
+                                web::delete().to(api::consent::delete_account),
+                            ),
                     )
                     .service(
                         web::scope("/checkin")
@@ -140,21 +146,57 @@ async fn main() -> std::io::Result<()> {
                     )
                     .service(
                         web::scope("/admin")
-                            .route("/dashboard/stats", web::get().to(api::admin::dashboard_stats))
-                            .route("/dashboard/user-growth", web::get().to(api::admin::user_growth_chart))
-                            .route("/dashboard/contribution-trend", web::get().to(api::admin::contribution_trend_chart))
-                            .route("/dashboard/source-distribution", web::get().to(api::admin::source_distribution))
-                            .route("/dashboard/recent-activity", web::get().to(api::admin::recent_activity))
+                            .route(
+                                "/dashboard/stats",
+                                web::get().to(api::admin::dashboard_stats),
+                            )
+                            .route(
+                                "/dashboard/user-growth",
+                                web::get().to(api::admin::user_growth_chart),
+                            )
+                            .route(
+                                "/dashboard/contribution-trend",
+                                web::get().to(api::admin::contribution_trend_chart),
+                            )
+                            .route(
+                                "/dashboard/source-distribution",
+                                web::get().to(api::admin::source_distribution),
+                            )
+                            .route(
+                                "/dashboard/recent-activity",
+                                web::get().to(api::admin::recent_activity),
+                            )
                             .route("/users", web::get().to(api::admin::list_users))
                             .route("/users/{id}", web::get().to(api::admin::get_user))
                             .route("/users/{id}/hsa", web::get().to(api::admin::get_user_hsa))
-                            .route("/users/{id}/contributions", web::get().to(api::admin::get_user_contributions))
-                            .route("/users/{id}/policies", web::get().to(api::admin::get_user_policies))
-                            .route("/users/{id}/claims", web::get().to(api::admin::get_user_claims))
-                            .route("/users/{id}/verify", web::post().to(api::admin::verify_user))
-                            .route("/users/{id}/reject", web::post().to(api::admin::reject_user))
-                            .route("/users/{id}/suspend", web::post().to(api::admin::suspend_user))
-                            .route("/users/{id}/activate", web::post().to(api::admin::activate_user)),
+                            .route(
+                                "/users/{id}/contributions",
+                                web::get().to(api::admin::get_user_contributions),
+                            )
+                            .route(
+                                "/users/{id}/policies",
+                                web::get().to(api::admin::get_user_policies),
+                            )
+                            .route(
+                                "/users/{id}/claims",
+                                web::get().to(api::admin::get_user_claims),
+                            )
+                            .route(
+                                "/users/{id}/verify",
+                                web::post().to(api::admin::verify_user),
+                            )
+                            .route(
+                                "/users/{id}/reject",
+                                web::post().to(api::admin::reject_user),
+                            )
+                            .route(
+                                "/users/{id}/suspend",
+                                web::post().to(api::admin::suspend_user),
+                            )
+                            .route(
+                                "/users/{id}/activate",
+                                web::post().to(api::admin::activate_user),
+                            ),
                     ),
             )
     })

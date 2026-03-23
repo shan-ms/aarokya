@@ -20,22 +20,24 @@ pub struct Partner {
 
 #[derive(Debug, Deserialize, Validate)]
 pub struct RegisterPartnerRequest {
-    #[validate(length(min = 1, max = 255, message = "company_name must be between 1 and 255 characters"))]
+    #[validate(length(
+        min = 1,
+        max = 255,
+        message = "company_name must be between 1 and 255 characters"
+    ))]
     pub company_name: String,
-    #[validate(length(min = 1, max = 50, message = "partner_type must be between 1 and 50 characters"))]
+    #[validate(length(
+        min = 1,
+        max = 50,
+        message = "partner_type must be between 1 and 50 characters"
+    ))]
     pub partner_type: String,
     pub gstin: Option<String>,
     pub contact_email: Option<String>,
     pub contact_phone: Option<String>,
 }
 
-pub const VALID_PARTNER_TYPES: &[&str] = &[
-    "employer",
-    "platform",
-    "ngo",
-    "csr",
-    "government",
-];
+pub const VALID_PARTNER_TYPES: &[&str] = &["employer", "platform", "ngo", "csr", "government"];
 
 impl RegisterPartnerRequest {
     pub fn validate_partner_type(&self) -> Result<(), String> {
@@ -99,9 +101,17 @@ impl AddWorkerRequest {
 #[derive(Debug, Deserialize, Validate)]
 pub struct BulkContributionItem {
     pub worker_phone: String,
-    #[validate(range(min = 1, max = 100_000_000, message = "amount_paise must be between 1 and 100000000"))]
+    #[validate(range(
+        min = 1,
+        max = 100_000_000,
+        message = "amount_paise must be between 1 and 100000000"
+    ))]
     pub amount_paise: i64,
-    #[validate(length(min = 1, max = 255, message = "idempotency_key must be between 1 and 255 characters"))]
+    #[validate(length(
+        min = 1,
+        max = 255,
+        message = "idempotency_key must be between 1 and 255 characters"
+    ))]
     pub idempotency_key: String,
 }
 
@@ -121,7 +131,10 @@ impl BulkContributionRequest {
         }
         for (i, item) in self.contributions.iter().enumerate() {
             if item.amount_paise < 1 {
-                return Err(format!("Contribution {} has invalid amount_paise: must be >= 1", i));
+                return Err(format!(
+                    "Contribution {} has invalid amount_paise: must be >= 1",
+                    i
+                ));
             }
             if item.idempotency_key.is_empty() {
                 return Err(format!("Contribution {} has empty idempotency_key", i));
@@ -259,7 +272,11 @@ mod tests {
                 contact_email: None,
                 contact_phone: None,
             };
-            assert!(req.validate_partner_type().is_ok(), "Expected '{}' to be valid", pt);
+            assert!(
+                req.validate_partner_type().is_ok(),
+                "Expected '{}' to be valid",
+                pt
+            );
         }
     }
 
@@ -343,7 +360,9 @@ mod tests {
                 idempotency_key: format!("key-{}", i),
             })
             .collect();
-        let req = BulkContributionRequest { contributions: items };
+        let req = BulkContributionRequest {
+            contributions: items,
+        };
         assert!(req.validate_items().is_err());
     }
 

@@ -92,11 +92,9 @@ impl FromRequest for AuthenticatedUser {
                 .to_str()
                 .map_err(|_| AppError::Unauthorized("Invalid Authorization header".to_string()))?;
 
-            let token = auth_header
-                .strip_prefix("Bearer ")
-                .ok_or_else(|| {
-                    AppError::Unauthorized("Invalid Authorization format".to_string())
-                })?;
+            let token = auth_header.strip_prefix("Bearer ").ok_or_else(|| {
+                AppError::Unauthorized("Invalid Authorization format".to_string())
+            })?;
 
             let claims = decode_token(token, &config.jwt_secret)
                 .map_err(|e| AppError::Unauthorized(format!("Invalid token: {}", e)))?;

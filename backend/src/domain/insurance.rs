@@ -69,9 +69,8 @@ pub fn available_plans() -> Vec<InsurancePlan> {
         InsurancePlan {
             id: PREMIUM_PLAN_ID.to_string(),
             name: "Premium Health Cover".to_string(),
-            description:
-                "Comprehensive health insurance covering hospitalization up to Rs 5 lakh"
-                    .to_string(),
+            description: "Comprehensive health insurance covering hospitalization up to Rs 5 lakh"
+                .to_string(),
             premium_paise: PREMIUM_PLAN_PREMIUM_PAISE,
             coverage_paise: PREMIUM_PLAN_COVERAGE_PAISE,
             min_balance_paise: PREMIUM_PLAN_MIN_BALANCE_PAISE,

@@ -19,7 +19,11 @@ pub struct HealthSavingsAccount {
 
 #[derive(Debug, Deserialize, Validate)]
 pub struct CreateHsaRequest {
-    #[validate(length(min = 8, max = 50, message = "ABHA ID must be between 8 and 50 characters"))]
+    #[validate(length(
+        min = 8,
+        max = 50,
+        message = "ABHA ID must be between 8 and 50 characters"
+    ))]
     pub abha_id: String,
 }
 

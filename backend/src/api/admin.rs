@@ -85,11 +85,22 @@ pub async fn dashboard_stats(
     auth: AuthenticatedUser,
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, AppError> {
-    require_role(&auth, &[Role::OperatorSuperAdmin, Role::OperatorInsuranceOps, Role::OperatorSupport, Role::OperatorAnalytics, Role::OperatorPartnerManager])?;
+    require_role(
+        &auth,
+        &[
+            Role::OperatorSuperAdmin,
+            Role::OperatorInsuranceOps,
+            Role::OperatorSupport,
+            Role::OperatorAnalytics,
+            Role::OperatorPartnerManager,
+        ],
+    )?;
 
-    let total_users: (i64,) = sqlx::query_as("SELECT COUNT(*)::bigint FROM users WHERE user_type IN ('customer', 'partner')")
-        .fetch_one(pool.get_ref())
-        .await?;
+    let total_users: (i64,) = sqlx::query_as(
+        "SELECT COUNT(*)::bigint FROM users WHERE user_type IN ('customer', 'partner')",
+    )
+    .fetch_one(pool.get_ref())
+    .await?;
 
     let total_hsa: (i64,) = sqlx::query_as("SELECT COALESCE(SUM(balance_paise), 0) FROM health_savings_accounts WHERE status = 'active'")
         .fetch_one(pool.get_ref())
@@ -102,11 +113,10 @@ pub async fn dashboard_stats(
     .fetch_one(pool.get_ref())
     .await?;
 
-    let active_policies: (i64,) = sqlx::query_as(
-        "SELECT COUNT(*)::bigint FROM insurance_policies WHERE status = 'active'",
-    )
-    .fetch_one(pool.get_ref())
-    .await?;
+    let active_policies: (i64,) =
+        sqlx::query_as("SELECT COUNT(*)::bigint FROM insurance_policies WHERE status = 'active'")
+            .fetch_one(pool.get_ref())
+            .await?;
 
     let stats = DashboardStatsResponse {
         total_users: total_users.0,
@@ -248,7 +258,14 @@ pub async fn list_users(
     pool: web::Data<PgPool>,
     query: web::Query<ListUsersQuery>,
 ) -> Result<HttpResponse, AppError> {
-    require_role(&auth, &[Role::OperatorSuperAdmin, Role::OperatorSupport, Role::OperatorPartnerManager])?;
+    require_role(
+        &auth,
+        &[
+            Role::OperatorSuperAdmin,
+            Role::OperatorSupport,
+            Role::OperatorPartnerManager,
+        ],
+    )?;
 
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
@@ -265,23 +282,42 @@ pub async fn list_users(
     );
 
     if !search.is_empty() {
-        let cond = format!(" AND (u.phone ILIKE '%{}%' OR u.name ILIKE '%{}%')", search.replace('\'', "''"), search.replace('\'', "''"));
+        let cond = format!(
+            " AND (u.phone ILIKE '%{}%' OR u.name ILIKE '%{}%')",
+            search.replace('\'', "''"),
+            search.replace('\'', "''")
+        );
         count_sql.push_str(&cond);
         data_sql.push_str(&cond);
     }
     if user_type.is_some() && !user_type.unwrap().is_empty() {
-        count_sql.push_str(&format!(" AND u.user_type = '{}'", user_type.unwrap().replace('\'', "''")));
-        data_sql.push_str(&format!(" AND u.user_type = '{}'", user_type.unwrap().replace('\'', "''")));
+        count_sql.push_str(&format!(
+            " AND u.user_type = '{}'",
+            user_type.unwrap().replace('\'', "''")
+        ));
+        data_sql.push_str(&format!(
+            " AND u.user_type = '{}'",
+            user_type.unwrap().replace('\'', "''")
+        ));
     }
     if status.is_some() && !status.unwrap().is_empty() {
-        count_sql.push_str(&format!(" AND COALESCE(u.status, 'active') = '{}'", status.unwrap().replace('\'', "''")));
-        data_sql.push_str(&format!(" AND COALESCE(u.status, 'active') = '{}'", status.unwrap().replace('\'', "''")));
+        count_sql.push_str(&format!(
+            " AND COALESCE(u.status, 'active') = '{}'",
+            status.unwrap().replace('\'', "''")
+        ));
+        data_sql.push_str(&format!(
+            " AND COALESCE(u.status, 'active') = '{}'",
+            status.unwrap().replace('\'', "''")
+        ));
     }
 
     let total: (i64,) = sqlx::query_as(&count_sql).fetch_one(pool.get_ref()).await?;
     let total_pages = (total.0 + page_size - 1) / page_size;
 
-    data_sql.push_str(&format!(" ORDER BY u.created_at DESC LIMIT {} OFFSET {}", page_size, offset));
+    data_sql.push_str(&format!(
+        " ORDER BY u.created_at DESC LIMIT {} OFFSET {}",
+        page_size, offset
+    ));
 
     #[derive(sqlx::FromRow)]
     struct UserRow {
@@ -339,7 +375,14 @@ pub async fn get_user(
     pool: web::Data<PgPool>,
     path: web::Path<Uuid>,
 ) -> Result<HttpResponse, AppError> {
-    require_role(&auth, &[Role::OperatorSuperAdmin, Role::OperatorSupport, Role::OperatorPartnerManager])?;
+    require_role(
+        &auth,
+        &[
+            Role::OperatorSuperAdmin,
+            Role::OperatorSupport,
+            Role::OperatorPartnerManager,
+        ],
+    )?;
 
     let user: Option<User> = sqlx::query_as("SELECT * FROM users WHERE id = $1")
         .bind(path.into_inner())
@@ -348,11 +391,13 @@ pub async fn get_user(
 
     let user = user.ok_or_else(|| AppError::NotFound("User not found".to_string()))?;
 
-    let hsa_balance: (i64,) = sqlx::query_as("SELECT COALESCE(balance_paise, 0) FROM health_savings_accounts WHERE user_id = $1")
-        .bind(user.id)
-        .fetch_optional(pool.get_ref())
-        .await?
-        .unwrap_or((0,));
+    let hsa_balance: (i64,) = sqlx::query_as(
+        "SELECT COALESCE(balance_paise, 0) FROM health_savings_accounts WHERE user_id = $1",
+    )
+    .bind(user.id)
+    .fetch_optional(pool.get_ref())
+    .await?
+    .unwrap_or((0,));
 
     let resp = AdminUserResponse {
         id: user.id.to_string(),
@@ -396,8 +441,8 @@ pub async fn get_user_hsa(
     .fetch_optional(pool.get_ref())
     .await?;
 
-    let (id, user_id, balance, total_contrib, created, updated) = row
-        .ok_or_else(|| AppError::NotFound("HSA not found".to_string()))?;
+    let (id, user_id, balance, total_contrib, created, updated) =
+        row.ok_or_else(|| AppError::NotFound("HSA not found".to_string()))?;
 
     Ok(HttpResponse::Ok().json(HsaResponse {
         id: id.to_string(),
@@ -428,10 +473,11 @@ pub async fn get_user_contributions(
         reference_id: Option<String>,
     }
 
-    let hsa_id: Option<Uuid> = sqlx::query_scalar("SELECT id FROM health_savings_accounts WHERE user_id = $1")
-        .bind(path.into_inner())
-        .fetch_optional(pool.get_ref())
-        .await?;
+    let hsa_id: Option<Uuid> =
+        sqlx::query_scalar("SELECT id FROM health_savings_accounts WHERE user_id = $1")
+            .bind(path.into_inner())
+            .fetch_optional(pool.get_ref())
+            .await?;
 
     let hsa_id = match hsa_id {
         Some(id) => id,
@@ -468,13 +514,17 @@ pub async fn get_user_policies(
     pool: web::Data<PgPool>,
     path: web::Path<Uuid>,
 ) -> Result<HttpResponse, AppError> {
-    require_role(&auth, &[Role::OperatorSuperAdmin, Role::OperatorInsuranceOps])?;
+    require_role(
+        &auth,
+        &[Role::OperatorSuperAdmin, Role::OperatorInsuranceOps],
+    )?;
 
     let user_id = path.into_inner();
-    let hsa_id: Option<Uuid> = sqlx::query_scalar("SELECT id FROM health_savings_accounts WHERE user_id = $1")
-        .bind(user_id)
-        .fetch_optional(pool.get_ref())
-        .await?;
+    let hsa_id: Option<Uuid> =
+        sqlx::query_scalar("SELECT id FROM health_savings_accounts WHERE user_id = $1")
+            .bind(user_id)
+            .fetch_optional(pool.get_ref())
+            .await?;
 
     let hsa_id = match hsa_id {
         Some(id) => id,
@@ -527,13 +577,17 @@ pub async fn get_user_claims(
     pool: web::Data<PgPool>,
     path: web::Path<Uuid>,
 ) -> Result<HttpResponse, AppError> {
-    require_role(&auth, &[Role::OperatorSuperAdmin, Role::OperatorInsuranceOps])?;
+    require_role(
+        &auth,
+        &[Role::OperatorSuperAdmin, Role::OperatorInsuranceOps],
+    )?;
 
     let user_id = path.into_inner();
-    let hsa_id: Option<Uuid> = sqlx::query_scalar("SELECT id FROM health_savings_accounts WHERE user_id = $1")
-        .bind(user_id)
-        .fetch_optional(pool.get_ref())
-        .await?;
+    let hsa_id: Option<Uuid> =
+        sqlx::query_scalar("SELECT id FROM health_savings_accounts WHERE user_id = $1")
+            .bind(user_id)
+            .fetch_optional(pool.get_ref())
+            .await?;
 
     let hsa_id = match hsa_id {
         Some(id) => id,

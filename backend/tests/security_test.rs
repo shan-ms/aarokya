@@ -41,7 +41,11 @@ async fn test_security_headers_present() {
     let headers = resp.headers();
 
     assert_eq!(
-        headers.get("x-content-type-options").unwrap().to_str().unwrap(),
+        headers
+            .get("x-content-type-options")
+            .unwrap()
+            .to_str()
+            .unwrap(),
         "nosniff",
         "X-Content-Type-Options header should be nosniff"
     );
@@ -216,7 +220,11 @@ async fn test_body_size_limit_allows_normal_payload() {
         .to_request();
     let resp = test::call_service(&app, req).await;
 
-    assert_eq!(resp.status(), 200, "Normal-sized payload should be accepted");
+    assert_eq!(
+        resp.status(),
+        200,
+        "Normal-sized payload should be accepted"
+    );
 }
 
 #[actix_rt::test]
@@ -224,7 +232,9 @@ async fn test_body_size_limit_rejects_oversized_payload() {
     // Set a very small limit for testing
     let app = test::init_service(
         App::new()
-            .app_data(aarokya_backend::infrastructure::security::json_body_config(64))
+            .app_data(aarokya_backend::infrastructure::security::json_body_config(
+                64,
+            ))
             .route("/echo", web::post().to(echo_handler)),
     )
     .await;
@@ -297,10 +307,7 @@ async fn test_xss_event_handler_stripped() {
         !sanitized.contains("onerror"),
         "Event handlers should be removed"
     );
-    assert!(
-        !sanitized.contains("alert"),
-        "Alert call should be removed"
-    );
+    assert!(!sanitized.contains("alert"), "Alert call should be removed");
 }
 
 #[actix_rt::test]
@@ -450,10 +457,7 @@ async fn test_jwt_invalid_token_rejected() {
     let secret = "test-secret-key-for-security-tests";
     let result = decode_token("not.a.valid.jwt", secret);
 
-    assert!(
-        result.is_err(),
-        "Invalid JWT tokens should be rejected"
-    );
+    assert!(result.is_err(), "Invalid JWT tokens should be rejected");
 }
 
 #[actix_rt::test]
@@ -480,10 +484,7 @@ async fn test_jwt_expired_token_rejected() {
     let token = encode_token(user_id, "customer", secret, -1).unwrap();
     let result = decode_token(&token, secret);
 
-    assert!(
-        result.is_err(),
-        "Expired JWT tokens should be rejected"
-    );
+    assert!(result.is_err(), "Expired JWT tokens should be rejected");
 }
 
 #[actix_rt::test]
@@ -509,10 +510,7 @@ async fn test_jwt_tampered_payload_rejected() {
     let tampered_token = format!("{}.{}.{}", parts[0], tampered_payload, parts[2]);
     let result = decode_token(&tampered_token, secret);
 
-    assert!(
-        result.is_err(),
-        "Tampered JWT tokens should be rejected"
-    );
+    assert!(result.is_err(), "Tampered JWT tokens should be rejected");
 }
 
 #[actix_rt::test]
@@ -536,7 +534,9 @@ async fn test_jwt_none_algorithm_rejected() {
 
     // A JWT with "alg": "none" and no signature
     let header = base64_url_encode(r#"{"alg":"none","typ":"JWT"}"#);
-    let payload = base64_url_encode(r#"{"sub":"00000000-0000-0000-0000-000000000000","user_type":"customer","exp":9999999999,"iat":1000000000,"token_type":"access"}"#);
+    let payload = base64_url_encode(
+        r#"{"sub":"00000000-0000-0000-0000-000000000000","user_type":"customer","exp":9999999999,"iat":1000000000,"token_type":"access"}"#,
+    );
     let none_token = format!("{}.{}.", header, payload);
 
     let secret = "test-secret-key-for-security-tests";
@@ -595,7 +595,8 @@ impl<W: std::io::Write> Base64Writer<W> {
         let input = &self.buffer;
         let mut i = 0;
         while i + 2 < input.len() {
-            let n = ((input[i] as u32) << 16) | ((input[i + 1] as u32) << 8) | (input[i + 2] as u32);
+            let n =
+                ((input[i] as u32) << 16) | ((input[i + 1] as u32) << 8) | (input[i + 2] as u32);
             self.writer.write_all(&[
                 CHARS[((n >> 18) & 0x3F) as usize],
                 CHARS[((n >> 12) & 0x3F) as usize],
@@ -673,8 +674,11 @@ async fn test_ip_rate_limiter_allows_under_limit() {
     };
 
     for i in 0..5 {
-        let result =
-            aarokya_backend::infrastructure::security::check_ip_rate_limit(&store, "10.0.0.1:/api", &config);
+        let result = aarokya_backend::infrastructure::security::check_ip_rate_limit(
+            &store,
+            "10.0.0.1:/api",
+            &config,
+        );
         assert!(
             result.is_ok(),
             "Request {} should be allowed (under limit)",
@@ -692,11 +696,18 @@ async fn test_ip_rate_limiter_blocks_over_limit() {
     };
 
     for _ in 0..3 {
-        let _ = aarokya_backend::infrastructure::security::check_ip_rate_limit(&store, "10.0.0.1:/api", &config);
+        let _ = aarokya_backend::infrastructure::security::check_ip_rate_limit(
+            &store,
+            "10.0.0.1:/api",
+            &config,
+        );
     }
 
-    let result =
-        aarokya_backend::infrastructure::security::check_ip_rate_limit(&store, "10.0.0.1:/api", &config);
+    let result = aarokya_backend::infrastructure::security::check_ip_rate_limit(
+        &store,
+        "10.0.0.1:/api",
+        &config,
+    );
     assert!(
         result.is_err(),
         "4th request should be blocked (over limit of 3)"
@@ -721,15 +732,30 @@ async fn test_ip_rate_limiter_different_ips_independent() {
 
     // IP 1 uses its quota
     assert!(
-        aarokya_backend::infrastructure::security::check_ip_rate_limit(&store, "10.0.0.1:/api", &config).is_ok()
+        aarokya_backend::infrastructure::security::check_ip_rate_limit(
+            &store,
+            "10.0.0.1:/api",
+            &config
+        )
+        .is_ok()
     );
     // IP 1 is now blocked
     assert!(
-        aarokya_backend::infrastructure::security::check_ip_rate_limit(&store, "10.0.0.1:/api", &config).is_err()
+        aarokya_backend::infrastructure::security::check_ip_rate_limit(
+            &store,
+            "10.0.0.1:/api",
+            &config
+        )
+        .is_err()
     );
     // IP 2 should still be allowed
     assert!(
-        aarokya_backend::infrastructure::security::check_ip_rate_limit(&store, "10.0.0.2:/api", &config).is_ok(),
+        aarokya_backend::infrastructure::security::check_ip_rate_limit(
+            &store,
+            "10.0.0.2:/api",
+            &config
+        )
+        .is_ok(),
         "Different IPs should have independent rate limits"
     );
 }
