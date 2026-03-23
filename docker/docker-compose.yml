@@ -1,0 +1,76 @@
+# docker/docker-compose.yml — Local development stack
+#
+# Usage:
+#   cd docker
+#   cp .env.example .env   # edit as needed
+#   docker compose up -d
+
+services:
+  # --------------- Infrastructure ---------------
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-aarokya}
+      POSTGRES_USER: ${POSTGRES_USER:-aarokya}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aarokya_dev}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aarokya}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --------------- Application ---------------
+
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-aarokya}:${POSTGRES_PASSWORD:-aarokya_dev}@postgres:5432/${POSTGRES_DB:-aarokya}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
+      JWT_EXPIRY_HOURS: ${JWT_EXPIRY_HOURS:-24}
+      PORT: "8080"
+      HOST: 0.0.0.0
+      RUST_LOG: ${RUST_LOG:-aarokya_backend=debug,actix_web=info}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  control-center:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.control-center
+    ports:
+      - "${CONTROL_CENTER_PORT:-3000}:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://backend:8080
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  redisdata:

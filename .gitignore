@@ -1,0 +1,43 @@
+# Rust
+target/
+Cargo.lock
+
+# Node
+node_modules/
+.next/
+dist/
+build/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Android (machine-specific & build)
+**/android/local.properties
+**/android/build/
+**/android/app/build/
+**/android/.gradle/
+*.keystore
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code
+.claude/
+
+# Logs
+*.log
+logs/
+
+# Coverage
+coverage/
+.nyc_output/
