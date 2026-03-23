@@ -128,6 +128,7 @@ pub enum Role {
 }
 
 impl Role {
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Option<Self> {
         match s {
             "customer" => Some(Role::Customer),
@@ -141,6 +142,7 @@ impl Role {
         }
     }
 
+    #[allow(dead_code)]
     pub fn as_str(&self) -> &'static str {
         match self {
             Role::Customer => "customer",
@@ -181,6 +183,7 @@ pub fn require_role(user: &AuthenticatedUser, allowed: &[Role]) -> Result<(), Ap
 /// ```ignore
 /// require_role_or_respond(&user, &[Role::Partner])?;
 /// ```
+#[allow(dead_code)]
 pub fn require_role_or_respond(
     user: &AuthenticatedUser,
     allowed: &[Role],

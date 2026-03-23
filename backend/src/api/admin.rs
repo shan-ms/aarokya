@@ -290,25 +290,25 @@ pub async fn list_users(
         count_sql.push_str(&cond);
         data_sql.push_str(&cond);
     }
-    if user_type.is_some() && !user_type.unwrap().is_empty() {
-        count_sql.push_str(&format!(
-            " AND u.user_type = '{}'",
-            user_type.unwrap().replace('\'', "''")
-        ));
-        data_sql.push_str(&format!(
-            " AND u.user_type = '{}'",
-            user_type.unwrap().replace('\'', "''")
-        ));
+    if let Some(ut) = user_type {
+        if !ut.is_empty() {
+            let escaped = ut.replace('\'', "''");
+            count_sql.push_str(&format!(" AND u.user_type = '{}'", escaped));
+            data_sql.push_str(&format!(" AND u.user_type = '{}'", escaped));
+        }
     }
-    if status.is_some() && !status.unwrap().is_empty() {
-        count_sql.push_str(&format!(
-            " AND COALESCE(u.status, 'active') = '{}'",
-            status.unwrap().replace('\'', "''")
-        ));
-        data_sql.push_str(&format!(
-            " AND COALESCE(u.status, 'active') = '{}'",
-            status.unwrap().replace('\'', "''")
-        ));
+    if let Some(st) = status {
+        if !st.is_empty() {
+            let escaped = st.replace('\'', "''");
+            count_sql.push_str(&format!(
+                " AND COALESCE(u.status, 'active') = '{}'",
+                escaped
+            ));
+            data_sql.push_str(&format!(
+                " AND COALESCE(u.status, 'active') = '{}'",
+                escaped
+            ));
+        }
     }
 
     let total: (i64,) = sqlx::query_as(&count_sql).fetch_one(pool.get_ref()).await?;
@@ -434,7 +434,15 @@ pub async fn get_user_hsa(
         updated_at: String,
     }
 
-    let row: Option<(Uuid, Uuid, i64, i64, Option<chrono::DateTime<Utc>>, Option<chrono::DateTime<Utc>>)> = sqlx::query_as(
+    type HsaRow = (
+        Uuid,
+        Uuid,
+        i64,
+        i64,
+        Option<chrono::DateTime<Utc>>,
+        Option<chrono::DateTime<Utc>>,
+    );
+    let row: Option<HsaRow> = sqlx::query_as(
         "SELECT id, user_id, balance_paise, total_contributed_paise, created_at, updated_at FROM health_savings_accounts WHERE user_id = $1",
     )
     .bind(path.into_inner())
@@ -534,7 +542,7 @@ pub async fn get_user_policies(
     #[derive(sqlx::FromRow)]
     struct PolicyRow {
         id: Uuid,
-        hsa_id: Uuid,
+        _hsa_id: Uuid,
         plan_name: String,
         premium_paise: i64,
         coverage_paise: i64,
@@ -598,8 +606,8 @@ pub async fn get_user_claims(
     struct ClaimRow {
         id: Uuid,
         policy_id: Uuid,
-        hsa_id: Uuid,
-        claim_type: String,
+        _hsa_id: Uuid,
+        _claim_type: String,
         amount_paise: i64,
         description: Option<String>,
         status: Option<String>,

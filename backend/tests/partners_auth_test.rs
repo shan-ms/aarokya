@@ -9,7 +9,6 @@ use std::collections::HashMap;
 use std::sync::RwLock;
 
 use chrono::Utc;
-use serde_json;
 use uuid::Uuid;
 use validator::Validate;
 
@@ -325,7 +324,7 @@ mod list_workers {
             per_page: None,
         };
         let page = query.page.unwrap_or(1).max(1);
-        let per_page = query.per_page.unwrap_or(50).min(1000).max(1);
+        let per_page = query.per_page.unwrap_or(50).clamp(1, 1000);
         assert_eq!(page, 1);
         assert_eq!(per_page, 50);
     }
@@ -350,7 +349,7 @@ mod list_workers {
             page: Some(1),
             per_page: Some(5000),
         };
-        let per_page = query.per_page.unwrap_or(50).min(1000).max(1);
+        let per_page = query.per_page.unwrap_or(50).clamp(1, 1000);
         assert_eq!(per_page, 1000);
     }
 
@@ -362,7 +361,7 @@ mod list_workers {
             page: Some(1),
             per_page: Some(0),
         };
-        let per_page = query.per_page.unwrap_or(50).min(1000).max(1);
+        let per_page = query.per_page.unwrap_or(50).clamp(1, 1000);
         assert_eq!(per_page, 1);
     }
 
@@ -423,7 +422,7 @@ mod list_workers {
     fn search_filter_simulated_by_name_match() {
         // Simulates the search/filter logic a caller would use on the workers
         // list response.
-        let workers = vec![
+        let workers = [
             ("Priya Sharma", "+919876543210"),
             ("Rahul Verma", "+919876543211"),
             ("Priya Singh", "+919876543212"),
@@ -780,7 +779,7 @@ mod partner_reports {
             per_page: Some(20),
         };
         let page = query.page.unwrap_or(1).max(1);
-        let per_page = query.per_page.unwrap_or(50).min(1000).max(1);
+        let per_page = query.per_page.unwrap_or(50).clamp(1, 1000);
         let offset = (page - 1) * per_page;
         assert_eq!(offset, 60);
     }

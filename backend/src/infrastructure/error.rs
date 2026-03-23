@@ -26,6 +26,7 @@ pub enum AppError {
     #[error("Validation error: {0}")]
     Validation(String),
     #[error("Too many requests: {0}")]
+    #[allow(dead_code)]
     TooManyRequests(String),
 }
 

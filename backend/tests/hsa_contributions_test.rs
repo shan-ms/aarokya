@@ -613,7 +613,7 @@ mod contribution_tests {
 
     #[test]
     fn multiple_contributions_accumulate_correctly() {
-        let contributions = vec![50_000i64, 100_000, 25_000, 224_900];
+        let contributions = [50_000i64, 100_000, 25_000, 224_900];
         let total: i64 = contributions.iter().sum();
         assert_eq!(total, 399_900, "Sum of contributions should equal 399900");
         assert!(hsa::is_basic_eligible(total));
@@ -810,21 +810,21 @@ mod contribution_tests {
         // Replicate the handler's offset logic
         let page = 3i64;
         let per_page = 20i64;
-        let offset = (page.max(1) - 1) * per_page.min(100).max(1);
+        let offset = (page.max(1) - 1) * per_page.clamp(1, 100);
         assert_eq!(offset, 40, "Page 3 with per_page 20 should offset 40");
     }
 
     #[test]
     fn pagination_per_page_clamped_to_100() {
         let requested_per_page = 200i64;
-        let clamped = requested_per_page.min(100).max(1);
+        let clamped = requested_per_page.clamp(1, 100);
         assert_eq!(clamped, 100, "per_page should be clamped to 100 max");
     }
 
     #[test]
     fn pagination_per_page_clamped_to_minimum_1() {
         let requested_per_page = 0i64;
-        let clamped = requested_per_page.min(100).max(1);
+        let clamped = requested_per_page.clamp(1, 100);
         assert_eq!(clamped, 1, "per_page should be at least 1");
     }
 

@@ -28,13 +28,11 @@ describe('Auth API', () => {
   });
 
   describe('sendOtp', () => {
-    it('should POST to /auth/otp/send with phone number', async () => {
+    it('should POST to /auth/send-otp with phone number', async () => {
       const mockResponse = {
         data: {
-          data: {
-            requestId: 'req-001',
-            expiresIn: 300,
-          },
+          requestId: 'req-001',
+          expiresIn: 300,
         },
       };
 
@@ -42,7 +40,7 @@ describe('Auth API', () => {
 
       const result = await sendOtp('+919876543210');
 
-      expect(mockedClient.post).toHaveBeenCalledWith('/auth/otp/send', {
+      expect(mockedClient.post).toHaveBeenCalledWith('/auth/send-otp', {
         phone: '+919876543210',
       });
       expect(result.data.requestId).toBe('req-001');
@@ -71,21 +69,14 @@ describe('Auth API', () => {
   });
 
   describe('verifyOtp', () => {
-    it('should POST to /auth/otp/verify with phone and otp', async () => {
+    it('should POST to /auth/verify-otp with phone, otp, and user_type', async () => {
       const mockResponse = {
         data: {
-          data: {
-            token: 'access-token-123',
-            refreshToken: 'refresh-token-456',
-            user: {
-              id: 'user-001',
-              phone: '+919876543210',
-              name: 'Ramesh',
-              language: 'hi',
-              createdAt: '2025-01-01T00:00:00Z',
-              updatedAt: '2025-01-01T00:00:00Z',
-            },
-          },
+          access_token: 'access-token-123',
+          refresh_token: 'refresh-token-456',
+          user_id: 'user-001',
+          user_type: 'customer',
+          is_new_user: false,
         },
       };
 
@@ -93,9 +84,10 @@ describe('Auth API', () => {
 
       const result = await verifyOtp('+919876543210', '123456');
 
-      expect(mockedClient.post).toHaveBeenCalledWith('/auth/otp/verify', {
+      expect(mockedClient.post).toHaveBeenCalledWith('/auth/verify-otp', {
         phone: '+919876543210',
         otp: '123456',
+        user_type: 'customer',
       });
       expect(result.data.token).toBe('access-token-123');
       expect(result.data.refreshToken).toBe('refresh-token-456');
@@ -128,13 +120,10 @@ describe('Auth API', () => {
   });
 
   describe('refreshToken', () => {
-    it('should POST to /auth/token/refresh with refresh token', async () => {
+    it('should POST to /auth/refresh with refresh token', async () => {
       const mockResponse = {
         data: {
-          data: {
-            token: 'new-access-token',
-            refreshToken: 'new-refresh-token',
-          },
+          access_token: 'new-access-token',
         },
       };
 
@@ -142,11 +131,11 @@ describe('Auth API', () => {
 
       const result = await refreshToken('old-refresh-token');
 
-      expect(mockedClient.post).toHaveBeenCalledWith('/auth/token/refresh', {
-        refreshToken: 'old-refresh-token',
+      expect(mockedClient.post).toHaveBeenCalledWith('/auth/refresh', {
+        refresh_token: 'old-refresh-token',
       });
       expect(result.data.token).toBe('new-access-token');
-      expect(result.data.refreshToken).toBe('new-refresh-token');
+      expect(result.data.refreshToken).toBe('old-refresh-token');
     });
 
     it('should propagate error when refresh token is invalid', async () => {

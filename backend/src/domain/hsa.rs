@@ -60,6 +60,7 @@ pub fn is_basic_eligible(total_contributed_paise: i64) -> bool {
 }
 
 /// Check if eligible for premium insurance
+#[allow(dead_code)]
 pub fn is_premium_eligible(total_contributed_paise: i64) -> bool {
     total_contributed_paise >= PREMIUM_INSURANCE_THRESHOLD
 }
@@ -87,6 +88,7 @@ pub fn contribution_velocity(total_contributed_paise: i64, account_age_days: i64
 
 /// Calculate the insurance eligibility percentage (0.0 to 100.0)
 /// Uses basic threshold as the reference for eligibility percentage
+#[allow(dead_code)]
 pub fn insurance_eligibility_percentage(total_contributed_paise: i64) -> f64 {
     (total_contributed_paise as f64 / BASIC_INSURANCE_THRESHOLD as f64 * 100.0).min(100.0)
 }

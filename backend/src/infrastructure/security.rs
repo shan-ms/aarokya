@@ -21,6 +21,7 @@ use uuid::Uuid;
 /// Strip common XSS payloads from a string.
 /// Removes `<script>` tags, event handler attributes, `javascript:` URIs,
 /// and other dangerous HTML constructs.
+#[allow(dead_code)]
 pub fn sanitize_input(input: &str) -> String {
     let mut result = input.to_string();
 
@@ -54,6 +55,7 @@ pub fn sanitize_input(input: &str) -> String {
 
 /// Detect common SQL injection patterns. Returns `true` if the input looks
 /// like it contains a SQL injection attempt.
+#[allow(dead_code)]
 pub fn contains_sql_injection(input: &str) -> bool {
     let lower = input.to_lowercase();
 
@@ -228,6 +230,7 @@ where
 /// Default max body size: 1 MB.
 pub const DEFAULT_BODY_LIMIT: usize = 1_048_576;
 /// Max body size for file upload endpoints: 10 MB.
+#[allow(dead_code)]
 pub const FILE_UPLOAD_BODY_LIMIT: usize = 10_485_760;
 
 /// Returns an `actix_web::web::JsonConfig` with the given byte limit and a
@@ -248,6 +251,7 @@ pub fn json_body_config(limit: usize) -> web::JsonConfig {
 // ── IP-based Rate Limiter ───────────────────────────────────────────────────
 
 /// Per-endpoint rate-limit configuration.
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct RateLimitConfig {
     /// Max requests allowed within the window.
@@ -272,6 +276,7 @@ pub type IpRateLimitStore = RwLock<HashMap<String, Vec<chrono::DateTime<chrono::
 /// Check whether the given IP + endpoint key should be rate-limited.
 /// Returns `Ok(())` if the request is allowed, or `Err(retry_after_secs)` if
 /// the caller should be throttled.
+#[allow(dead_code)]
 pub fn check_ip_rate_limit(
     store: &IpRateLimitStore,
     key: &str,
@@ -296,12 +301,14 @@ pub fn check_ip_rate_limit(
 }
 
 /// Build a rate-limit key from the client IP and an endpoint tag.
+#[allow(dead_code)]
 pub fn rate_limit_key(ip: &str, endpoint: &str) -> String {
     format!("{}:{}", ip, endpoint)
 }
 
 /// Extract the client IP address from the request, respecting X-Forwarded-For
 /// if present.
+#[allow(dead_code)]
 pub fn client_ip(req: &actix_web::HttpRequest) -> String {
     req.headers()
         .get("X-Forwarded-For")

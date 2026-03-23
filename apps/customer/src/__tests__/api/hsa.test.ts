@@ -31,18 +31,16 @@ describe('HSA API', () => {
     it('should GET /hsa and return HSA data', async () => {
       const mockHsa = {
         data: {
-          data: {
-            id: 'hsa-001',
-            userId: 'user-001',
-            abhaId: 'ABHA-12345',
-            balance: 500000,
-            totalContributed: 750000,
-            totalWithdrawn: 250000,
-            insuranceEligible: true,
-            insuranceThreshold: 399900,
-            createdAt: '2025-01-01T00:00:00Z',
-            updatedAt: '2025-02-01T00:00:00Z',
-          },
+          id: 'hsa-001',
+          userId: 'user-001',
+          abhaId: 'ABHA-12345',
+          balance: 500000,
+          totalContributed: 750000,
+          totalWithdrawn: 250000,
+          insuranceEligible: true,
+          insuranceThreshold: 399900,
+          createdAt: '2025-01-01T00:00:00Z',
+          updatedAt: '2025-02-01T00:00:00Z',
         },
       };
 
@@ -69,28 +67,14 @@ describe('HSA API', () => {
     it('should GET /hsa/dashboard and return full dashboard', async () => {
       const mockDashboard = {
         data: {
-          data: {
-            hsa: {
-              id: 'hsa-001',
-              balance: 500000,
-              totalContributed: 750000,
-              totalWithdrawn: 250000,
-              insuranceEligible: true,
-              insuranceThreshold: 399900,
-            },
-            contributionSummary: {
-              total: 750000,
-              bySelf: 500000,
-              byEmployer: 250000,
-              byGovernment: 0,
-              byCashback: 0,
-              byReferral: 0,
-              monthlyAverage: 62500,
-              streak: 12,
-            },
-            recentContributions: [],
-            activePolicies: [],
-          },
+          balance_paise: 500000,
+          total_contributed_paise: 750000,
+          insurance_eligible: true,
+          basic_insurance_progress: 100,
+          premium_insurance_progress: 50,
+          contribution_count: 12,
+          contribution_velocity_paise_per_month: 62500,
+          insurance_tier: 'basic',
         },
       };
 
@@ -100,7 +84,7 @@ describe('HSA API', () => {
 
       expect(mockedClient.get).toHaveBeenCalledWith('/hsa/dashboard');
       expect(result.data.hsa.balance).toBe(500000);
-      expect(result.data.contributionSummary.streak).toBe(12);
+      expect(result.data.contributionSummary.monthlyAverage).toBe(62500);
     });
 
     it('should propagate authorization error', async () => {
@@ -146,7 +130,7 @@ describe('HSA API', () => {
       const result = await createHsa('ABHA-99999');
 
       expect(mockedClient.post).toHaveBeenCalledWith('/hsa', {
-        abhaId: 'ABHA-99999',
+        abha_id: 'ABHA-99999',
       });
       expect(result.data.balance).toBe(0);
       expect(result.data.abhaId).toBe('ABHA-99999');

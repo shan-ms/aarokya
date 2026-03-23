@@ -41,8 +41,7 @@ pub async fn register_partner(
     // Validate request body
     body.validate()
         .map_err(|e| AppError::Validation(format!("{}", e)))?;
-    body.validate_partner_type()
-        .map_err(|e| AppError::Validation(e))?;
+    body.validate_partner_type().map_err(AppError::Validation)?;
 
     // Check if already registered
     let existing = sqlx::query_as::<_, Partner>("SELECT * FROM partners WHERE user_id = $1")
@@ -141,8 +140,7 @@ pub async fn add_worker(
     body: web::Json<AddWorkerRequest>,
 ) -> Result<HttpResponse, AppError> {
     // Validate that at least one lookup field is provided
-    body.validate_lookup()
-        .map_err(|e| AppError::Validation(e))?;
+    body.validate_lookup().map_err(AppError::Validation)?;
 
     let partner = fetch_partner(&auth, pool.get_ref()).await?;
 
@@ -296,7 +294,7 @@ pub async fn bulk_contribute(
     body: web::Json<BulkContributionRequest>,
 ) -> Result<HttpResponse, AppError> {
     // Validate the request
-    body.validate_items().map_err(|e| AppError::Validation(e))?;
+    body.validate_items().map_err(AppError::Validation)?;
 
     let partner = fetch_partner(&auth, pool.get_ref()).await?;
 
@@ -486,7 +484,7 @@ pub async fn partner_reports(
     let partner = fetch_partner(&auth, pool.get_ref()).await?;
 
     let page = params.page.unwrap_or(1).max(1);
-    let per_page = params.per_page.unwrap_or(50).min(1000).max(1);
+    let per_page = params.per_page.unwrap_or(50).clamp(1, 1000);
     let offset = (page - 1) * per_page;
 
     // Build dynamic query with optional date range filters

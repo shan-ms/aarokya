@@ -40,10 +40,10 @@ pub async fn subscribe(
     .ok_or_else(|| AppError::NotFound("HSA account not found".to_string()))?;
 
     // Check eligibility based on total contributions
-    check_eligibility(hsa.total_contributed_paise, &plan).map_err(|e| AppError::BadRequest(e))?;
+    check_eligibility(hsa.total_contributed_paise, &plan).map_err(AppError::BadRequest)?;
 
     // Check balance for premium deduction
-    check_balance_for_premium(hsa.balance_paise, &plan).map_err(|e| AppError::BadRequest(e))?;
+    check_balance_for_premium(hsa.balance_paise, &plan).map_err(AppError::BadRequest)?;
 
     // Check for existing active policy of same plan
     let existing = sqlx::query_scalar::<_, i64>(
@@ -148,7 +148,7 @@ pub async fn submit_claim(
 
     // Validate claim amount using domain logic
     validate_claim_amount(body.amount_paise, policy.coverage_paise)
-        .map_err(|e| AppError::BadRequest(e))?;
+        .map_err(AppError::BadRequest)?;
 
     let claim_id = Uuid::new_v4();
     let document_urls_json = body

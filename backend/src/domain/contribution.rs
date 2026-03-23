@@ -19,6 +19,7 @@ pub struct Contribution {
     pub created_at: Option<DateTime<Utc>>,
 }
 
+#[allow(dead_code)]
 pub const VALID_SOURCE_TYPES: &[&str] = &[
     "self",
     "employer",
@@ -52,6 +53,7 @@ pub struct CreateContributionRequest {
 
 impl CreateContributionRequest {
     /// Validate source_type against the allowed list
+    #[allow(dead_code)]
     pub fn validate_source_type(&self) -> Result<(), String> {
         if !VALID_SOURCE_TYPES.contains(&self.source_type.as_str()) {
             return Err(format!(

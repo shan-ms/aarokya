@@ -118,6 +118,7 @@ pub fn check_balance_for_premium(balance_paise: i64, plan: &InsurancePlan) -> Re
 }
 
 /// Calculate the net balance after premium deduction.
+#[allow(dead_code)]
 pub fn balance_after_premium(balance_paise: i64, premium_paise: i64) -> i64 {
     balance_paise - premium_paise
 }
